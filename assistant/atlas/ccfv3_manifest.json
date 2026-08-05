@@ -1,0 +1,1382 @@
+[
+  {
+    "voxel_x": 100,
+    "ap_mm": 4.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_100.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_100.png"
+  },
+  {
+    "voxel_x": 105,
+    "ap_mm": 4.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_105.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_105.png"
+  },
+  {
+    "voxel_x": 110,
+    "ap_mm": 4.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_110.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_110.png"
+  },
+  {
+    "voxel_x": 115,
+    "ap_mm": 4.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_115.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_115.png"
+  },
+  {
+    "voxel_x": 120,
+    "ap_mm": 4.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_120.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_120.png"
+  },
+  {
+    "voxel_x": 125,
+    "ap_mm": 4.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_125.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_125.png"
+  },
+  {
+    "voxel_x": 130,
+    "ap_mm": 4.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_130.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_130.png"
+  },
+  {
+    "voxel_x": 135,
+    "ap_mm": 4.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_135.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_135.png"
+  },
+  {
+    "voxel_x": 140,
+    "ap_mm": 4.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_140.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_140.png"
+  },
+  {
+    "voxel_x": 145,
+    "ap_mm": 3.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_145.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_145.png"
+  },
+  {
+    "voxel_x": 150,
+    "ap_mm": 3.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_150.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_150.png"
+  },
+  {
+    "voxel_x": 155,
+    "ap_mm": 3.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_155.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_155.png"
+  },
+  {
+    "voxel_x": 160,
+    "ap_mm": 3.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_160.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_160.png"
+  },
+  {
+    "voxel_x": 165,
+    "ap_mm": 3.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_165.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_165.png"
+  },
+  {
+    "voxel_x": 170,
+    "ap_mm": 3.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_170.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_170.png"
+  },
+  {
+    "voxel_x": 175,
+    "ap_mm": 3.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_175.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_175.png"
+  },
+  {
+    "voxel_x": 180,
+    "ap_mm": 3.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_180.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_180.png"
+  },
+  {
+    "voxel_x": 185,
+    "ap_mm": 3.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_185.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_185.png"
+  },
+  {
+    "voxel_x": 190,
+    "ap_mm": 3.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_190.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_190.png"
+  },
+  {
+    "voxel_x": 195,
+    "ap_mm": 3.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_195.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_195.png"
+  },
+  {
+    "voxel_x": 200,
+    "ap_mm": 3.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_200.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_200.png"
+  },
+  {
+    "voxel_x": 205,
+    "ap_mm": 3.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_205.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_205.png"
+  },
+  {
+    "voxel_x": 210,
+    "ap_mm": 3.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_210.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_210.png"
+  },
+  {
+    "voxel_x": 215,
+    "ap_mm": 3.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_215.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_215.png"
+  },
+  {
+    "voxel_x": 220,
+    "ap_mm": 3.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_220.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_220.png"
+  },
+  {
+    "voxel_x": 225,
+    "ap_mm": 3.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_225.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_225.png"
+  },
+  {
+    "voxel_x": 230,
+    "ap_mm": 3.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_230.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_230.png"
+  },
+  {
+    "voxel_x": 235,
+    "ap_mm": 3.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_235.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_235.png"
+  },
+  {
+    "voxel_x": 240,
+    "ap_mm": 3.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_240.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_240.png"
+  },
+  {
+    "voxel_x": 245,
+    "ap_mm": 2.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_245.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_245.png"
+  },
+  {
+    "voxel_x": 250,
+    "ap_mm": 2.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_250.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_250.png"
+  },
+  {
+    "voxel_x": 255,
+    "ap_mm": 2.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_255.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_255.png"
+  },
+  {
+    "voxel_x": 260,
+    "ap_mm": 2.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_260.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_260.png"
+  },
+  {
+    "voxel_x": 265,
+    "ap_mm": 2.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_265.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_265.png"
+  },
+  {
+    "voxel_x": 270,
+    "ap_mm": 2.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_270.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_270.png"
+  },
+  {
+    "voxel_x": 275,
+    "ap_mm": 2.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_275.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_275.png"
+  },
+  {
+    "voxel_x": 280,
+    "ap_mm": 2.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_280.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_280.png"
+  },
+  {
+    "voxel_x": 285,
+    "ap_mm": 2.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_285.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_285.png"
+  },
+  {
+    "voxel_x": 290,
+    "ap_mm": 2.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_290.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_290.png"
+  },
+  {
+    "voxel_x": 295,
+    "ap_mm": 2.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_295.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_295.png"
+  },
+  {
+    "voxel_x": 300,
+    "ap_mm": 2.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_300.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_300.png"
+  },
+  {
+    "voxel_x": 305,
+    "ap_mm": 2.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_305.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_305.png"
+  },
+  {
+    "voxel_x": 310,
+    "ap_mm": 2.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_310.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_310.png"
+  },
+  {
+    "voxel_x": 315,
+    "ap_mm": 2.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_315.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_315.png"
+  },
+  {
+    "voxel_x": 320,
+    "ap_mm": 2.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_320.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_320.png"
+  },
+  {
+    "voxel_x": 325,
+    "ap_mm": 2.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_325.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_325.png"
+  },
+  {
+    "voxel_x": 330,
+    "ap_mm": 2.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_330.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_330.png"
+  },
+  {
+    "voxel_x": 335,
+    "ap_mm": 2.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_335.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_335.png"
+  },
+  {
+    "voxel_x": 340,
+    "ap_mm": 2.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_340.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_340.png"
+  },
+  {
+    "voxel_x": 345,
+    "ap_mm": 1.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_345.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_345.png"
+  },
+  {
+    "voxel_x": 350,
+    "ap_mm": 1.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_350.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_350.png"
+  },
+  {
+    "voxel_x": 355,
+    "ap_mm": 1.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_355.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_355.png"
+  },
+  {
+    "voxel_x": 360,
+    "ap_mm": 1.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_360.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_360.png"
+  },
+  {
+    "voxel_x": 365,
+    "ap_mm": 1.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_365.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_365.png"
+  },
+  {
+    "voxel_x": 370,
+    "ap_mm": 1.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_370.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_370.png"
+  },
+  {
+    "voxel_x": 375,
+    "ap_mm": 1.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_375.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_375.png"
+  },
+  {
+    "voxel_x": 380,
+    "ap_mm": 1.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_380.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_380.png"
+  },
+  {
+    "voxel_x": 385,
+    "ap_mm": 1.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_385.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_385.png"
+  },
+  {
+    "voxel_x": 390,
+    "ap_mm": 1.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_390.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_390.png"
+  },
+  {
+    "voxel_x": 395,
+    "ap_mm": 1.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_395.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_395.png"
+  },
+  {
+    "voxel_x": 400,
+    "ap_mm": 1.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_400.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_400.png"
+  },
+  {
+    "voxel_x": 405,
+    "ap_mm": 1.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_405.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_405.png"
+  },
+  {
+    "voxel_x": 410,
+    "ap_mm": 1.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_410.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_410.png"
+  },
+  {
+    "voxel_x": 415,
+    "ap_mm": 1.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_415.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_415.png"
+  },
+  {
+    "voxel_x": 420,
+    "ap_mm": 1.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_420.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_420.png"
+  },
+  {
+    "voxel_x": 425,
+    "ap_mm": 1.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_425.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_425.png"
+  },
+  {
+    "voxel_x": 430,
+    "ap_mm": 1.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_430.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_430.png"
+  },
+  {
+    "voxel_x": 435,
+    "ap_mm": 1.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_435.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_435.png"
+  },
+  {
+    "voxel_x": 440,
+    "ap_mm": 1.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_440.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_440.png"
+  },
+  {
+    "voxel_x": 445,
+    "ap_mm": 0.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_445.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_445.png"
+  },
+  {
+    "voxel_x": 450,
+    "ap_mm": 0.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_450.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_450.png"
+  },
+  {
+    "voxel_x": 455,
+    "ap_mm": 0.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_455.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_455.png"
+  },
+  {
+    "voxel_x": 460,
+    "ap_mm": 0.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_460.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_460.png"
+  },
+  {
+    "voxel_x": 465,
+    "ap_mm": 0.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_465.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_465.png"
+  },
+  {
+    "voxel_x": 470,
+    "ap_mm": 0.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_470.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_470.png"
+  },
+  {
+    "voxel_x": 475,
+    "ap_mm": 0.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_475.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_475.png"
+  },
+  {
+    "voxel_x": 480,
+    "ap_mm": 0.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_480.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_480.png"
+  },
+  {
+    "voxel_x": 485,
+    "ap_mm": 0.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_485.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_485.png"
+  },
+  {
+    "voxel_x": 490,
+    "ap_mm": 0.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_490.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_490.png"
+  },
+  {
+    "voxel_x": 495,
+    "ap_mm": 0.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_495.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_495.png"
+  },
+  {
+    "voxel_x": 500,
+    "ap_mm": 0.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_500.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_500.png"
+  },
+  {
+    "voxel_x": 505,
+    "ap_mm": 0.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_505.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_505.png"
+  },
+  {
+    "voxel_x": 510,
+    "ap_mm": 0.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_510.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_510.png"
+  },
+  {
+    "voxel_x": 515,
+    "ap_mm": 0.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_515.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_515.png"
+  },
+  {
+    "voxel_x": 520,
+    "ap_mm": 0.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_520.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_520.png"
+  },
+  {
+    "voxel_x": 525,
+    "ap_mm": 0.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_525.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_525.png"
+  },
+  {
+    "voxel_x": 530,
+    "ap_mm": 0.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_530.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_530.png"
+  },
+  {
+    "voxel_x": 535,
+    "ap_mm": 0.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_535.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_535.png"
+  },
+  {
+    "voxel_x": 540,
+    "ap_mm": 0.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_540.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_540.png"
+  },
+  {
+    "voxel_x": 545,
+    "ap_mm": -0.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_545.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_545.png"
+  },
+  {
+    "voxel_x": 550,
+    "ap_mm": -0.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_550.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_550.png"
+  },
+  {
+    "voxel_x": 555,
+    "ap_mm": -0.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_555.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_555.png"
+  },
+  {
+    "voxel_x": 560,
+    "ap_mm": -0.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_560.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_560.png"
+  },
+  {
+    "voxel_x": 565,
+    "ap_mm": -0.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_565.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_565.png"
+  },
+  {
+    "voxel_x": 570,
+    "ap_mm": -0.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_570.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_570.png"
+  },
+  {
+    "voxel_x": 575,
+    "ap_mm": -0.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_575.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_575.png"
+  },
+  {
+    "voxel_x": 580,
+    "ap_mm": -0.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_580.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_580.png"
+  },
+  {
+    "voxel_x": 585,
+    "ap_mm": -0.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_585.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_585.png"
+  },
+  {
+    "voxel_x": 590,
+    "ap_mm": -0.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_590.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_590.png"
+  },
+  {
+    "voxel_x": 595,
+    "ap_mm": -0.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_595.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_595.png"
+  },
+  {
+    "voxel_x": 600,
+    "ap_mm": -0.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_600.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_600.png"
+  },
+  {
+    "voxel_x": 605,
+    "ap_mm": -0.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_605.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_605.png"
+  },
+  {
+    "voxel_x": 610,
+    "ap_mm": -0.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_610.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_610.png"
+  },
+  {
+    "voxel_x": 615,
+    "ap_mm": -0.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_615.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_615.png"
+  },
+  {
+    "voxel_x": 620,
+    "ap_mm": -0.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_620.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_620.png"
+  },
+  {
+    "voxel_x": 625,
+    "ap_mm": -0.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_625.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_625.png"
+  },
+  {
+    "voxel_x": 630,
+    "ap_mm": -0.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_630.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_630.png"
+  },
+  {
+    "voxel_x": 635,
+    "ap_mm": -0.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_635.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_635.png"
+  },
+  {
+    "voxel_x": 640,
+    "ap_mm": -1.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_640.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_640.png"
+  },
+  {
+    "voxel_x": 645,
+    "ap_mm": -1.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_645.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_645.png"
+  },
+  {
+    "voxel_x": 650,
+    "ap_mm": -1.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_650.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_650.png"
+  },
+  {
+    "voxel_x": 655,
+    "ap_mm": -1.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_655.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_655.png"
+  },
+  {
+    "voxel_x": 660,
+    "ap_mm": -1.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_660.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_660.png"
+  },
+  {
+    "voxel_x": 665,
+    "ap_mm": -1.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_665.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_665.png"
+  },
+  {
+    "voxel_x": 670,
+    "ap_mm": -1.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_670.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_670.png"
+  },
+  {
+    "voxel_x": 675,
+    "ap_mm": -1.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_675.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_675.png"
+  },
+  {
+    "voxel_x": 680,
+    "ap_mm": -1.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_680.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_680.png"
+  },
+  {
+    "voxel_x": 685,
+    "ap_mm": -1.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_685.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_685.png"
+  },
+  {
+    "voxel_x": 690,
+    "ap_mm": -1.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_690.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_690.png"
+  },
+  {
+    "voxel_x": 695,
+    "ap_mm": -1.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_695.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_695.png"
+  },
+  {
+    "voxel_x": 700,
+    "ap_mm": -1.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_700.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_700.png"
+  },
+  {
+    "voxel_x": 705,
+    "ap_mm": -1.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_705.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_705.png"
+  },
+  {
+    "voxel_x": 710,
+    "ap_mm": -1.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_710.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_710.png"
+  },
+  {
+    "voxel_x": 715,
+    "ap_mm": -1.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_715.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_715.png"
+  },
+  {
+    "voxel_x": 720,
+    "ap_mm": -1.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_720.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_720.png"
+  },
+  {
+    "voxel_x": 725,
+    "ap_mm": -1.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_725.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_725.png"
+  },
+  {
+    "voxel_x": 730,
+    "ap_mm": -1.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_730.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_730.png"
+  },
+  {
+    "voxel_x": 735,
+    "ap_mm": -1.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_735.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_735.png"
+  },
+  {
+    "voxel_x": 740,
+    "ap_mm": -2.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_740.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_740.png"
+  },
+  {
+    "voxel_x": 745,
+    "ap_mm": -2.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_745.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_745.png"
+  },
+  {
+    "voxel_x": 750,
+    "ap_mm": -2.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_750.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_750.png"
+  },
+  {
+    "voxel_x": 755,
+    "ap_mm": -2.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_755.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_755.png"
+  },
+  {
+    "voxel_x": 760,
+    "ap_mm": -2.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_760.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_760.png"
+  },
+  {
+    "voxel_x": 765,
+    "ap_mm": -2.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_765.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_765.png"
+  },
+  {
+    "voxel_x": 770,
+    "ap_mm": -2.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_770.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_770.png"
+  },
+  {
+    "voxel_x": 775,
+    "ap_mm": -2.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_775.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_775.png"
+  },
+  {
+    "voxel_x": 780,
+    "ap_mm": -2.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_780.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_780.png"
+  },
+  {
+    "voxel_x": 785,
+    "ap_mm": -2.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_785.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_785.png"
+  },
+  {
+    "voxel_x": 790,
+    "ap_mm": -2.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_790.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_790.png"
+  },
+  {
+    "voxel_x": 795,
+    "ap_mm": -2.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_795.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_795.png"
+  },
+  {
+    "voxel_x": 800,
+    "ap_mm": -2.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_800.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_800.png"
+  },
+  {
+    "voxel_x": 805,
+    "ap_mm": -2.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_805.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_805.png"
+  },
+  {
+    "voxel_x": 810,
+    "ap_mm": -2.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_810.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_810.png"
+  },
+  {
+    "voxel_x": 815,
+    "ap_mm": -2.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_815.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_815.png"
+  },
+  {
+    "voxel_x": 820,
+    "ap_mm": -2.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_820.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_820.png"
+  },
+  {
+    "voxel_x": 825,
+    "ap_mm": -2.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_825.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_825.png"
+  },
+  {
+    "voxel_x": 830,
+    "ap_mm": -2.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_830.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_830.png"
+  },
+  {
+    "voxel_x": 835,
+    "ap_mm": -2.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_835.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_835.png"
+  },
+  {
+    "voxel_x": 840,
+    "ap_mm": -3.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_840.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_840.png"
+  },
+  {
+    "voxel_x": 845,
+    "ap_mm": -3.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_845.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_845.png"
+  },
+  {
+    "voxel_x": 850,
+    "ap_mm": -3.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_850.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_850.png"
+  },
+  {
+    "voxel_x": 855,
+    "ap_mm": -3.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_855.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_855.png"
+  },
+  {
+    "voxel_x": 860,
+    "ap_mm": -3.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_860.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_860.png"
+  },
+  {
+    "voxel_x": 865,
+    "ap_mm": -3.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_865.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_865.png"
+  },
+  {
+    "voxel_x": 870,
+    "ap_mm": -3.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_870.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_870.png"
+  },
+  {
+    "voxel_x": 875,
+    "ap_mm": -3.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_875.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_875.png"
+  },
+  {
+    "voxel_x": 880,
+    "ap_mm": -3.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_880.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_880.png"
+  },
+  {
+    "voxel_x": 885,
+    "ap_mm": -3.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_885.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_885.png"
+  },
+  {
+    "voxel_x": 890,
+    "ap_mm": -3.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_890.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_890.png"
+  },
+  {
+    "voxel_x": 895,
+    "ap_mm": -3.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_895.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_895.png"
+  },
+  {
+    "voxel_x": 900,
+    "ap_mm": -3.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_900.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_900.png"
+  },
+  {
+    "voxel_x": 905,
+    "ap_mm": -3.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_905.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_905.png"
+  },
+  {
+    "voxel_x": 910,
+    "ap_mm": -3.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_910.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_910.png"
+  },
+  {
+    "voxel_x": 915,
+    "ap_mm": -3.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_915.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_915.png"
+  },
+  {
+    "voxel_x": 920,
+    "ap_mm": -3.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_920.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_920.png"
+  },
+  {
+    "voxel_x": 925,
+    "ap_mm": -3.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_925.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_925.png"
+  },
+  {
+    "voxel_x": 930,
+    "ap_mm": -3.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_930.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_930.png"
+  },
+  {
+    "voxel_x": 935,
+    "ap_mm": -3.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_935.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_935.png"
+  },
+  {
+    "voxel_x": 940,
+    "ap_mm": -4.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_940.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_940.png"
+  },
+  {
+    "voxel_x": 945,
+    "ap_mm": -4.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_945.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_945.png"
+  },
+  {
+    "voxel_x": 950,
+    "ap_mm": -4.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_950.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_950.png"
+  },
+  {
+    "voxel_x": 955,
+    "ap_mm": -4.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_955.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_955.png"
+  },
+  {
+    "voxel_x": 960,
+    "ap_mm": -4.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_960.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_960.png"
+  },
+  {
+    "voxel_x": 965,
+    "ap_mm": -4.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_965.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_965.png"
+  },
+  {
+    "voxel_x": 970,
+    "ap_mm": -4.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_970.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_970.png"
+  },
+  {
+    "voxel_x": 975,
+    "ap_mm": -4.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_975.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_975.png"
+  },
+  {
+    "voxel_x": 980,
+    "ap_mm": -4.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_980.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_980.png"
+  },
+  {
+    "voxel_x": 985,
+    "ap_mm": -4.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_985.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_985.png"
+  },
+  {
+    "voxel_x": 990,
+    "ap_mm": -4.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_990.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_990.png"
+  },
+  {
+    "voxel_x": 995,
+    "ap_mm": -4.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_995.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_995.png"
+  },
+  {
+    "voxel_x": 1000,
+    "ap_mm": -4.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_1000.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1000.png"
+  },
+  {
+    "voxel_x": 1005,
+    "ap_mm": -4.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_1005.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1005.png"
+  },
+  {
+    "voxel_x": 1010,
+    "ap_mm": -4.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_1010.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1010.png"
+  },
+  {
+    "voxel_x": 1015,
+    "ap_mm": -4.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_1015.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1015.png"
+  },
+  {
+    "voxel_x": 1020,
+    "ap_mm": -4.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_1020.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1020.png"
+  },
+  {
+    "voxel_x": 1025,
+    "ap_mm": -4.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_1025.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1025.png"
+  },
+  {
+    "voxel_x": 1030,
+    "ap_mm": -4.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_1030.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1030.png"
+  },
+  {
+    "voxel_x": 1035,
+    "ap_mm": -4.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_1035.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1035.png"
+  },
+  {
+    "voxel_x": 1040,
+    "ap_mm": -5.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_1040.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1040.png"
+  },
+  {
+    "voxel_x": 1045,
+    "ap_mm": -5.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_1045.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1045.png"
+  },
+  {
+    "voxel_x": 1050,
+    "ap_mm": -5.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_1050.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1050.png"
+  },
+  {
+    "voxel_x": 1055,
+    "ap_mm": -5.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_1055.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1055.png"
+  },
+  {
+    "voxel_x": 1060,
+    "ap_mm": -5.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_1060.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1060.png"
+  },
+  {
+    "voxel_x": 1065,
+    "ap_mm": -5.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_1065.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1065.png"
+  },
+  {
+    "voxel_x": 1070,
+    "ap_mm": -5.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_1070.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1070.png"
+  },
+  {
+    "voxel_x": 1075,
+    "ap_mm": -5.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_1075.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1075.png"
+  },
+  {
+    "voxel_x": 1080,
+    "ap_mm": -5.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_1080.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1080.png"
+  },
+  {
+    "voxel_x": 1085,
+    "ap_mm": -5.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_1085.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1085.png"
+  },
+  {
+    "voxel_x": 1090,
+    "ap_mm": -5.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_1090.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1090.png"
+  },
+  {
+    "voxel_x": 1095,
+    "ap_mm": -5.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_1095.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1095.png"
+  },
+  {
+    "voxel_x": 1100,
+    "ap_mm": -5.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_1100.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1100.png"
+  },
+  {
+    "voxel_x": 1105,
+    "ap_mm": -5.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_1105.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1105.png"
+  },
+  {
+    "voxel_x": 1110,
+    "ap_mm": -5.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_1110.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1110.png"
+  },
+  {
+    "voxel_x": 1115,
+    "ap_mm": -5.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_1115.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1115.png"
+  },
+  {
+    "voxel_x": 1120,
+    "ap_mm": -5.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_1120.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1120.png"
+  },
+  {
+    "voxel_x": 1125,
+    "ap_mm": -5.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_1125.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1125.png"
+  },
+  {
+    "voxel_x": 1130,
+    "ap_mm": -5.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_1130.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1130.png"
+  },
+  {
+    "voxel_x": 1135,
+    "ap_mm": -5.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_1135.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1135.png"
+  },
+  {
+    "voxel_x": 1140,
+    "ap_mm": -6.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_1140.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1140.png"
+  },
+  {
+    "voxel_x": 1145,
+    "ap_mm": -6.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_1145.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1145.png"
+  },
+  {
+    "voxel_x": 1150,
+    "ap_mm": -6.1,
+    "template_url": "/atlas/ccfv3/tpl_ap_1150.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1150.png"
+  },
+  {
+    "voxel_x": 1155,
+    "ap_mm": -6.15,
+    "template_url": "/atlas/ccfv3/tpl_ap_1155.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1155.png"
+  },
+  {
+    "voxel_x": 1160,
+    "ap_mm": -6.2,
+    "template_url": "/atlas/ccfv3/tpl_ap_1160.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1160.png"
+  },
+  {
+    "voxel_x": 1165,
+    "ap_mm": -6.25,
+    "template_url": "/atlas/ccfv3/tpl_ap_1165.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1165.png"
+  },
+  {
+    "voxel_x": 1170,
+    "ap_mm": -6.3,
+    "template_url": "/atlas/ccfv3/tpl_ap_1170.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1170.png"
+  },
+  {
+    "voxel_x": 1175,
+    "ap_mm": -6.35,
+    "template_url": "/atlas/ccfv3/tpl_ap_1175.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1175.png"
+  },
+  {
+    "voxel_x": 1180,
+    "ap_mm": -6.4,
+    "template_url": "/atlas/ccfv3/tpl_ap_1180.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1180.png"
+  },
+  {
+    "voxel_x": 1185,
+    "ap_mm": -6.45,
+    "template_url": "/atlas/ccfv3/tpl_ap_1185.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1185.png"
+  },
+  {
+    "voxel_x": 1190,
+    "ap_mm": -6.5,
+    "template_url": "/atlas/ccfv3/tpl_ap_1190.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1190.png"
+  },
+  {
+    "voxel_x": 1195,
+    "ap_mm": -6.55,
+    "template_url": "/atlas/ccfv3/tpl_ap_1195.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1195.png"
+  },
+  {
+    "voxel_x": 1200,
+    "ap_mm": -6.6,
+    "template_url": "/atlas/ccfv3/tpl_ap_1200.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1200.png"
+  },
+  {
+    "voxel_x": 1205,
+    "ap_mm": -6.65,
+    "template_url": "/atlas/ccfv3/tpl_ap_1205.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1205.png"
+  },
+  {
+    "voxel_x": 1210,
+    "ap_mm": -6.7,
+    "template_url": "/atlas/ccfv3/tpl_ap_1210.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1210.png"
+  },
+  {
+    "voxel_x": 1215,
+    "ap_mm": -6.75,
+    "template_url": "/atlas/ccfv3/tpl_ap_1215.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1215.png"
+  },
+  {
+    "voxel_x": 1220,
+    "ap_mm": -6.8,
+    "template_url": "/atlas/ccfv3/tpl_ap_1220.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1220.png"
+  },
+  {
+    "voxel_x": 1225,
+    "ap_mm": -6.85,
+    "template_url": "/atlas/ccfv3/tpl_ap_1225.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1225.png"
+  },
+  {
+    "voxel_x": 1230,
+    "ap_mm": -6.9,
+    "template_url": "/atlas/ccfv3/tpl_ap_1230.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1230.png"
+  },
+  {
+    "voxel_x": 1235,
+    "ap_mm": -6.95,
+    "template_url": "/atlas/ccfv3/tpl_ap_1235.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1235.png"
+  },
+  {
+    "voxel_x": 1240,
+    "ap_mm": -7.0,
+    "template_url": "/atlas/ccfv3/tpl_ap_1240.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1240.png"
+  },
+  {
+    "voxel_x": 1245,
+    "ap_mm": -7.05,
+    "template_url": "/atlas/ccfv3/tpl_ap_1245.png",
+    "boundary_url": "/atlas/ccfv3/bnd_ap_1245.png"
+  }
+]

@@ -1,0 +1,120 @@
+{
+  "$schema": "hamilton-syringes-v1",
+  "notes": [
+    "divNlPerMm = (volumeUl * 1000) / strokeLengthMm; this is the SYRINGE_DIV value consumed by injector_control.ino.",
+    "Values sourced from Hamilton part-specific specification sheets (product PDFs) and the Hamilton Syringe & Needle Reference Guide, 'Syringe Dimensions' table (p.80).",
+    "hardwareCompatible=true means the syringe shares the 7.8 mm barrel OD used by the current UD Neuroinjector 3D-printed housing/retention mechanism; other syringes will require a redesigned housing.",
+    "Confirmed by physical test-fit: Neuros syringe variants (65457/65458/65459) do NOT fit the current housing/retention mechanism despite sharing the same barrel OD. Only Knurled Hub (KH) variants are currently supported. See genericReference.",
+    "leadScrewPitchMm matches the 'lead' constant in injector_control.ino (mm traveled per motor revolution)."
+  ],
+  "leadScrewPitchMm": 0.6096,
+  "stepsPerRevolution": 1600,
+  "hardwareBarrelOdMm": 7.8,
+  "syringes": [
+    {
+      "id": "ham-7000-5",
+      "modelNumber": "7000.5",
+      "displayName": "Hamilton 7000.5 (0.5 µL)",
+      "seriesFamily": "7000 Series Microliter",
+      "volumeUl": 0.5,
+      "barrelOdMm": 7.8,
+      "strokeLengthMm": 60,
+      "isDefault": true,
+      "variants": [
+        { "partNumber": "86250", "termination": "Knurled Hub (KH)", "gauge": "25s", "pointStyle": "3: Blunt", "needleLength": "2.75 in (69.9 mm)" },
+        { "partNumber": "86257", "termination": "Knurled Hub (KH)", "gauge": "32s", "pointStyle": "3: Blunt", "needleLength": "3.94 in (100 mm)" },
+        { "partNumber": "86259", "termination": "Knurled Hub (KH)", "gauge": "25s", "pointStyle": "2: Curved, Beveled", "needleLength": "2.75 in (69.9 mm)" }
+      ],
+      "divNlPerMm": 8.333333,
+      "hardwareCompatible": true,
+      "calibratedPartNumberPrefix": "CAL"
+    },
+    {
+      "id": "ham-7001",
+      "modelNumber": "7001",
+      "displayName": "Hamilton 7001 (1 µL, 25 ga)",
+      "seriesFamily": "7000 Series Microliter",
+      "volumeUl": 1.0,
+      "barrelOdMm": 7.8,
+      "strokeLengthMm": 60,
+      "isDefault": true,
+      "variants": [
+        { "partNumber": "80100", "termination": "Knurled Hub (KH)", "gauge": "25s", "pointStyle": "3: Blunt", "needleLength": "2.75 in (69.9 mm)" },
+        { "partNumber": "80135", "termination": "Knurled Hub (KH)", "gauge": "25s", "pointStyle": "2: Curved, Beveled", "needleLength": "2.75 in (69.9 mm)" }
+      ],
+      "divNlPerMm": 16.666667,
+      "hardwareCompatible": true,
+      "calibratedPartNumberPrefix": "CAL"
+    },
+    {
+      "id": "ham-7101",
+      "modelNumber": "7101",
+      "displayName": "Hamilton 7101 (1 µL, 22 ga)",
+      "seriesFamily": "7000 Series Microliter",
+      "volumeUl": 1.0,
+      "barrelOdMm": 7.8,
+      "strokeLengthMm": 60,
+      "isDefault": false,
+      "variants": [
+        { "partNumber": "86200", "termination": "Knurled Hub (KH)", "gauge": "22s", "pointStyle": "3: Blunt", "needleLength": "2.75 in (69.9 mm)" },
+        { "partNumber": "86211", "termination": "Knurled Hub (KH)", "gauge": "22s", "pointStyle": "2: Curved, Beveled", "needleLength": "2.75 in (69.9 mm)" }
+      ],
+      "divNlPerMm": 16.666667,
+      "hardwareCompatible": true,
+      "calibratedPartNumberPrefix": "CAL"
+    },
+    {
+      "id": "ham-7002",
+      "modelNumber": "7002",
+      "displayName": "Hamilton 7002 (2 µL, 25/30 ga)",
+      "seriesFamily": "7000 Series Microliter",
+      "volumeUl": 2.0,
+      "barrelOdMm": 7.8,
+      "strokeLengthMm": 60,
+      "isDefault": false,
+      "variants": [
+        { "partNumber": "88400", "termination": "Knurled Hub (KH)", "gauge": "25s", "pointStyle": "3: Blunt", "needleLength": "2.75 in (69.9 mm)" }
+      ],
+      "divNlPerMm": 33.333333,
+      "hardwareCompatible": true,
+      "calibratedPartNumberPrefix": "CAL"
+    },
+    {
+      "id": "ham-7102",
+      "modelNumber": "7102",
+      "displayName": "Hamilton 7102 (2 µL, 23 ga)",
+      "seriesFamily": "7000 Series Microliter",
+      "volumeUl": 2.0,
+      "barrelOdMm": 7.8,
+      "strokeLengthMm": 60,
+      "isDefault": false,
+      "variants": [
+        { "partNumber": "88500", "termination": "Knurled Hub (KH)", "gauge": "23s", "pointStyle": "3: Blunt", "needleLength": "2.75 in (69.9 mm)" },
+        { "partNumber": "88511", "termination": "Knurled Hub (KH)", "gauge": "23s", "pointStyle": "2: Curved, Beveled", "needleLength": "2.75 in (69.9 mm)" }
+      ],
+      "divNlPerMm": 33.333333,
+      "hardwareCompatible": true,
+      "calibratedPartNumberPrefix": "CAL"
+    },
+    {
+      "id": "ham-7105",
+      "modelNumber": "7105",
+      "displayName": "Hamilton 7105 (5 µL, 24 ga)",
+      "seriesFamily": "7000 Series Microliter",
+      "volumeUl": 5.0,
+      "barrelOdMm": 7.8,
+      "strokeLengthMm": 60,
+      "isDefault": false,
+      "variants": [
+        { "partNumber": "88000", "termination": "Knurled Hub (KH)", "gauge": "24s", "pointStyle": "3: Blunt", "needleLength": "2.75 in (69.9 mm)" },
+        { "partNumber": "88011", "termination": "Knurled Hub (KH)", "gauge": "24s", "pointStyle": "2: Curved, Beveled", "needleLength": "2.75 in (69.9 mm)" }
+      ],
+      "divNlPerMm": 83.333333,
+      "hardwareCompatible": true,
+      "calibratedPartNumberPrefix": "CAL"
+    }
+  ],
+  "genericReference": [
+    { "volumeLabel": "0.5 / 1 / 2 µL (Neuros)", "series": "Neuros (65457/65458/65459)", "barrelOdMm": 7.8, "strokeLengthMm": null, "volumeUl": null, "divNlPerMm": null, "hardwareCompatible": false, "note": "Confirmed by physical test-fit: does NOT fit the current 3D-printed housing/retention mechanism, despite matching barrel OD. Planned for support in a future Neuroinjector hardware release with an updated build." }
+  ]
+}

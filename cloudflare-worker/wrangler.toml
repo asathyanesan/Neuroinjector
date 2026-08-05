@@ -1,0 +1,8 @@
+name = "neuroinjector-assistant-worker"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Optional monthly query counter:
+# [[kv_namespaces]]
+# binding = "QUERY_COUNTER"
+# id = "<your-kv-namespace-id>"

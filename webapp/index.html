@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UD Neuroinjector — Syringe Configurator</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>UD Neuroinjector — Syringe Configurator</h1>
+    <p>
+      Pick the Hamilton syringe model(s) you use, then download a ready-to-flash
+      <code>injector_control.ino</code>. Everything runs locally in your browser —
+      no data is sent anywhere.
+    </p>
+  </header>
+
+  <main>
+    <section id="hardware-syringes">
+      <h2>1. Choose your syringe(s)</h2>
+      <p class="hint">
+        These share the 7.8&nbsp;mm barrel OD used by the current 3D-printed housing and
+        drop straight in. Check every syringe you want available from the device's
+        <code>Select Syringe</code> menu (up to 7).
+      </p>
+      <div id="syringe-list" class="syringe-list"></div>
+    </section>
+
+    <section id="custom-syringes">
+      <h2>2. (Optional) Add a syringe not listed</h2>
+      <p class="hint">
+        Have a Hamilton syringe that isn't in the list, or a non-Hamilton syringe?
+        Enter its rated volume and plunger stroke length (see its datasheet), or
+        directly type its nL/mm dispense rate if you already know it.
+      </p>
+      <form id="custom-form" class="custom-form">
+        <label>Name
+          <input type="text" id="custom-name" placeholder="e.g. My 10 uL Syringe" required />
+        </label>
+        <label>Volume (µL)
+          <input type="number" id="custom-volume" min="0.001" step="any" />
+        </label>
+        <label>Stroke length (mm)
+          <input type="number" id="custom-stroke" min="0.001" step="any" placeholder="60 (typical)" />
+        </label>
+        <span class="or">or</span>
+        <label>Direct nL/mm
+          <input type="number" id="custom-div" min="0.000001" step="any" />
+        </label>
+        <button type="submit">Add</button>
+      </form>
+      <ul id="custom-list" class="custom-syringe-list"></ul>
+    </section>
+
+    <section id="default-section">
+      <h2>3. Default syringe on boot</h2>
+      <select id="default-select"></select>
+    </section>
+
+    <section id="generate-section">
+      <h2>4. Generate</h2>
+      <button id="generate-btn" disabled>Generate injector_control.ino</button>
+      <button id="download-btn" disabled>Download .ino</button>
+      <p id="generate-error" class="error"></p>
+      <details id="preview-details">
+        <summary>Preview generated file</summary>
+        <pre id="preview"></pre>
+      </details>
+    </section>
+
+    <section id="reference-section">
+      <h2>Full Hamilton syringe reference</h2>
+      <p class="hint">
+        Data pulled directly from Hamilton specification sheets and the Hamilton
+        Syringe &amp; Needle Reference Guide. Syringes marked "No" require a
+        redesigned housing before they'll physically fit the current hardware.
+      </p>
+      <table id="reference-table">
+        <thead>
+          <tr><th>Model</th><th>Volume</th><th>Barrel OD</th><th>Stroke</th><th>nL/mm</th><th>Fits current hardware</th><th>Notes</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://github.com/downingr1/ud-bio-automated-injector-control" target="_blank" rel="noopener">
+        UD Neuroinjector on GitHub
+      </a>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

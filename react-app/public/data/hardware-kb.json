@@ -1,0 +1,62 @@
+[
+  {
+    "id": "serial-comm",
+    "category": "Firmware / Serial Communication",
+    "title": "Connecting to the injector over serial",
+    "content": "The injector firmware (injector_control_stepper/injector_control.ino) communicates over USB serial at 115200 baud. Use the Arduino IDE Serial Monitor or the VS Code Serial Monitor extension, set baud rate to 115200. If no startup message appears, press the physical reset button on the Arduino expansion board. The serial menu accepts single ASCII digit characters ('1'-'9') as commands, not full words."
+  },
+  {
+    "id": "syringe-div-formula",
+    "category": "Firmware / Syringe Configuration",
+    "title": "How syringe_div (nL/mm) is calculated",
+    "content": "syringe_div is the number of nanoliters dispensed per millimeter of plunger travel: syringe_div (nL/mm) = (syringe volume in µL * 1000) / stroke length in mm. For Hamilton 7000.5 (0.5 µL, 60 mm stroke) this is 25/3 ≈ 8.333 nL/mm (HAM_7000_5_DIV). For Hamilton 7001 (1 µL, 60 mm stroke) this is 50/3 ≈ 16.667 nL/mm (HAM_7001_DIV). getsteps(volume) converts a requested injection volume to stepper steps using this constant, the lead screw pitch (0.6096 mm/revolution), and 1600 steps/revolution (microstepping)."
+  },
+  {
+    "id": "select-syringe-menu",
+    "category": "Firmware / Syringe Configuration",
+    "title": "Changing the active syringe at runtime",
+    "content": "select_syringe() prints a serial menu of built-in syringe presets plus a 'Custom' option and an 'Exit without changing' option, each mapped to a single digit. get_div() is called when Custom is selected and prompts the user to type a numeric nL/mm value directly over serial. The Syringe Configurator web app (webapp/) generates a customized injector_control.ino with up to 7 syringe presets baked in as digits '1'-'7', with 'Custom' and 'Exit' as the last two digits — it splices code between marker comments (SYRINGE_CONSTANTS_START/END, SYRINGE_MENU_START/END, SYRINGE_CASES_START/END, SYRINGE_DEFAULT_START/END) in the .ino file."
+  },
+  {
+    "id": "injection-timing",
+    "category": "Firmware / Injection Behavior",
+    "title": "Injection/extraction timing and progress output",
+    "content": "start_injector(inject) runs a non-blocking injection or extraction move. While running, it prints a 1 Hz countdown with elapsed seconds, remaining seconds, and percent-complete, computed from totalDurationSeconds and the stepper's current position. If the user pauses mid-injection, pauseDuration is tracked and compensated for so timing estimates stay accurate after resuming."
+  },
+  {
+    "id": "hardware-compatible-syringes",
+    "category": "Hardware / Syringe Compatibility",
+    "title": "Which Hamilton syringes physically fit the current housing",
+    "content": "The current 3D-printed housing/retention mechanism (models/Currrent/3DPrintedParts/: Cover, Motor Housing, PlungerDriverB, RetentionMechanism) is designed around Hamilton 7000-series syringes with a 7.8 mm barrel OD and 60 mm stroke length: 7000.5 (0.5 µL), 7001 (1 µL, 25 ga), 7101 (1 µL, 22 ga), 7002 (2 µL, 25/30 ga), 7102 (2 µL, 23 ga), 7105 (5 µL, 24 ga) — Knurled Hub (KH) termination only. Barrel OD alone is not sufficient to guarantee fit; retention-mechanism clamp geometry and overall syringe length also matter."
+  },
+  {
+    "id": "neuros-not-compatible",
+    "category": "Hardware / Syringe Compatibility",
+    "title": "Neuros syringes do NOT currently fit",
+    "content": "Hamilton Neuros syringes (part numbers 65457-01/02, 65458-01/02, 65459-01/02) share the same 7.8 mm barrel OD as the supported KH syringes but have been confirmed by physical test-fit to NOT fit the current 3D-printed housing/retention mechanism, likely due to their adjustable needle-exposure sleeve/adapter assembly adding length or geometry the housing wasn't designed around. Do not recommend Neuros syringes for the current hardware build. Neuros support is planned for a future Neuroinjector hardware revision."
+  },
+  {
+    "id": "assembly-overview",
+    "category": "Hardware / Assembly",
+    "title": "Physical assembly sequence (summary)",
+    "content": "Full steps are in documentation/UD MEE_BIO Automated Injector - Assembly Procedure.pdf. Summary: (1) heat-set M3/M4 threaded inserts into the Motor Housing, Cover, and PlungerDriverB; (2) attach Motor Housing to the linear guide rail with M3*20mm screws, washers, and nuts (a red rubber stop must remain on the rail); (3) insert vibration dampeners and mount the NEMA 8 mount on top; (4) mount the NEMA 8 stepper motor; (5) thread the flange nut onto the lead screw and attach it to the plunger driver; (6) couple the lead screw to the stepper motor shaft leaving ~1/32in gap to avoid friction (couplings often need to be drilled to exactly 1/8in); (7) insert the coupled motor/lead screw assembly into the Motor Housing and secure with M3*10mm screws (flange nut must be threaded at least 1/2in onto the rod first for clearance); (8) attach the Cover with M3*10mm screws, and M4*8mm set screws for the stereotaxic arm mount; (9) wire the limit switch; (10) attach the Retention Mechanism to the Cover using one M4*8mm screw as a pivot point, secure with an M4 thumb screw; (11) insert the syringe and secure it with the thumb screw on the plunger driver (do not overtighten — it can affect the zero position)."
+  },
+  {
+    "id": "nema8-stepper",
+    "category": "Hardware / Motor",
+    "title": "NEMA 8 stepper motor",
+    "content": "The injector uses a NEMA 8 stepper motor (see documentation/NEMA_8_Manual.pdf for the full spec sheet) driving an ultra-precision lead screw (McMaster 6350K685) through a flange nut (McMaster 6350K681) with a 1/8in-to-4mm shaft coupler. Lead screw pitch is 0.6096 mm/revolution; the firmware uses 1600 steps/revolution (microstepping) to convert desired travel distance to stepper step counts."
+  },
+  {
+    "id": "common-troubleshooting-no-serial",
+    "category": "Troubleshooting",
+    "title": "No serial output / device not responding",
+    "content": "If no startup message appears in the Serial Monitor: (1) confirm baud rate is set to 115200; (2) confirm the correct COM/serial port is selected; (3) press the physical reset button on the Arduino expansion board; (4) confirm the USB cable supports data (not charge-only); (5) if code was just reflashed, wait a few seconds after upload before opening the monitor."
+  },
+  {
+    "id": "common-troubleshooting-zero-position",
+    "category": "Troubleshooting",
+    "title": "Injection volumes seem off / zero position drift",
+    "content": "The plunger driver's zero (home) position is established relative to the limit switch. Overtightening the syringe retention thumb screw or the plunger driver thumb screw can shift the effective zero position and cause volume inaccuracies. If injected volumes seem consistently off by a fixed amount, re-home the device and re-check that the syringe plunger's resting position matches the expected zero before starting an injection sequence."
+  }
+]
