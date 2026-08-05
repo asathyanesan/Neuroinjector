@@ -249,6 +249,19 @@ body {
 .typing span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
 
+/* ─── Streaming status: pulsing label beside typing dots (in-bubble) ─── */
+.typing-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.typing-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  animation: ni-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ni-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
 .loading-status { color: var(--muted); font-size: 0.8rem; padding: 0 0.5rem; }
 
 .input-bar {
@@ -344,23 +357,45 @@ body {
 
 .error { color: var(--danger); }
 
-/* Markdown tables inside chat bubbles (RAG citation tables, GFM) */
+/* ═══════════════════════════════════════════════════════════════════════
+   Markdown tables inside chat bubbles (RAG citation tables, GFM)
+   Formatting fix: top-aligned cells, compact numeric coordinate columns,
+   wrap-friendly Notes column (no more vertical "ribbon" crush).
+   ═══════════════════════════════════════════════════════════════════════ */
 .bubble table {
   width: 100%;
   border-collapse: collapse;
   margin: 0.6rem 0;
   font-size: 0.82rem;
+  table-layout: auto;
 }
 .bubble th, .bubble td {
   border: 1px solid var(--border);
-  padding: 0.4rem 0.6rem;
+  padding: 0.45rem 0.6rem;
   text-align: left;
+  vertical-align: top;          /* short values no longer float mid-row */
+  white-space: normal;          /* allow wrapping (kills the vertical ribbon) */
+  overflow-wrap: anywhere;      /* break long AAV names / titers cleanly */
 }
 .bubble th {
   background: var(--panel-2);
   color: var(--accent);
   font-weight: 600;
+  white-space: nowrap;          /* keep header labels on one line */
 }
+/* Coordinate columns: AP / ML / DV → compact, right-aligned, tabular */
+.bubble td:nth-child(3),
+.bubble td:nth-child(4),
+.bubble td:nth-child(5) {
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* Injected Material column tends to hold long vector names */
+.bubble td:nth-child(7) { min-width: 160px; }
+/* Notes column (last): room to wrap as prose, but capped */
+.bubble td:last-child { min-width: 200px; max-width: 340px; }
+
 .bubble tr:nth-child(even) td { background: rgba(148, 163, 184, 0.06); }
 .bubble a { color: var(--accent); }
 
@@ -502,8 +537,10 @@ body {
   .input-bar { padding: 0.6rem 0.75rem; gap: 0.4rem; }
   .input-bar textarea { font-size: 1rem; } /* prevent iOS auto-zoom on focus */
 
-  /* Chat tables: horizontal scroll instead of overflow */
-  .bubble table { display: block; overflow-x: auto; white-space: nowrap; }
+  /* Chat tables: horizontal scroll, but KEEP cell wrapping
+     (old rule used white-space: nowrap which crushed every cell) */
+  .bubble table { display: block; overflow-x: auto; white-space: normal; }
+  .bubble td:last-child { min-width: 150px; max-width: 240px; }
 
   /* Empty state */
   .empty-state { padding: 0 0.5rem; }
