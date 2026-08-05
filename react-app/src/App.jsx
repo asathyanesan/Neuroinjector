@@ -88,12 +88,8 @@ export default function App() {
     fetch('data/stereotaxic-protocols.json').then((r) => r.json()).then(setLiteraturePapers)
       .catch(() => setDataError((e) => e || 'Could not load stereotaxic-protocols.json'));
     // NOTE: surgical-protocols.json (the ~172MB raw ingest corpus) is deliberately NOT
-    // fetched here. It is ingest INPUT only — full of abstract-only, non-surgical noise
-    // (vaccine/zebrafish/pathology papers) with regions:[] and no coordinates. Its
-    // surgery-relevant, context-gated, coordinate-bearing subset is injection-passages.json,
-    // which is the primary RAG source below.
-    // Offline-precomputed coordinates/injectate/CCF cross-reference, keyed by PMID
-    // (scripts/extract-injection-data.js) — regex-parsed; kept as a fallback source.
+    // fetched here. It is ingest INPUT only. Its surgery-relevant, context-gated,
+    // coordinate-bearing subset is injection-passages.json, the primary RAG source below.
     fetch('data/injection-coordinates.json').then((r) => r.json())
       .then((arr) => setInjectionIndex(new Map(arr.map((rec) => [String(rec.pmid), rec]))))
       .catch(() => { /* optional, falls back to live extraction */ });
@@ -123,20 +119,18 @@ export default function App() {
   // Builds the retrieval pool from the small, committable sources:
   //   1. injection-passages.json  — PRIMARY: surgery-relevant, region-bound passages
   //   2. stereotaxic-protocols.json — secondary full-text methods corpus
-  // The 172MB surgical-protocols.json is intentionally excluded (see fetch note above).
   function getMergedLiteraturePool() {
     const pool = new Map();
 
     // 1. Passage papers — the distilled, injection-relevant subset. Each carries its
-    //    context-gated CCF regions and the raw passage text (which the LLM parses).
+    //    context-gated CCF regions and the individual passage objects (which the LLM parses).
     passageIndex.forEach((rec, key) => {
-      const passageText = (rec.passages || []).map((p) => p.text).join(' ');
       pool.set(key, {
         pmid: rec.pmid,
         regions: [...(rec.ccf_regions || [])],
         title: rec.title || null,
         methodsText: '',
-        abstractText: passageText,
+        abstractText: (rec.passages || []).map((p) => p.text).join(' '),
         passages: rec.passages || [],
       });
     });
@@ -168,10 +162,9 @@ export default function App() {
   const MOUSE_SIGNALS = /\bmice\b|\bmouse\b|\bc57bl[\\/\s-]/i;
   function isMousePaper(entry) {
     const indexed = injectionIndex.get(String(entry.pmid));
-    // Prefer the pre-computed species tag from injection-coordinates.json.
     if (indexed?.species) return indexed.species !== 'rat';
-    // Fallback: scan the available text directly.
-    const t = `${entry.title || ''} ${entry.methodsText.slice(0, 800)} ${entry.abstractText.slice(0, 400)}`;
+    const passageText = (entry.passages || []).map((p) => p.text).join(' ');
+    const t = `${entry.title || ''} ${entry.methodsText.slice(0, 800)} ${entry.abstractText.slice(0, 400)} ${passageText.slice(0, 400)}`;
     const isRat = RAT_SIGNALS.test(t);
     const isMouse = MOUSE_SIGNALS.test(t);
     return !(isRat && !isMouse); // exclude rat-only; keep mouse, mixed, unknown
@@ -184,25 +177,20 @@ export default function App() {
     if (!pool.length) return [];
     const scored = pool.map((entry) => {
       const regionsText = entry.regions.join(' ');
-      const text = `${entry.title || ''} ${regionsText} ${entry.methodsText.slice(0, 1500)} ${entry.abstractText.slice(0, 1200)}`;
+      const passageText = (entry.passages || []).map((p) => p.text).join(' ');
+      const text = `${entry.title || ''} ${regionsText} ${entry.methodsText.slice(0, 1500)} ${passageText.slice(0, 1500)}`;
       let score = scoreText(words, text);
 
-      // Region-aware boosts using the passage-derived CCF regions and region terms.
+      // Boost exact CCF acronym / region-term matches over generic keyword overlap.
       entry.regions.forEach((r) => {
-        if (r && lowerQuery.includes(r.toLowerCase())) score += 10; // CCF acronym in query
+        if (r && lowerQuery.includes(r.toLowerCase())) score += 10;
       });
-      (entry.passages || []).forEach((ps) => {
-        (ps.region_terms || []).forEach((t) => {
-          if (t && lowerQuery.includes(t.toLowerCase())) score += 6; // spelled-out region term
+      (entry.passages || []).forEach((p) => {
+        (p.region_terms || []).forEach((term) => {
+          if (term && lowerQuery.includes(term.toLowerCase())) score += 6;
         });
       });
 
-      // Coordinate-bearing passages are the highest-value evidence.
-      const coordPassages = (entry.passages || []).filter((ps) => ps.has_coords);
-      if (coordPassages.length) score += 3;
-      else if ((entry.passages || []).length) score += 1;
-
-      // Legacy pre-parsed coordinate index (fallback only).
       const indexed = injectionIndex.get(String(entry.pmid));
       const coords = indexed?.coordinates?.length
         ? indexed.coordinates
@@ -212,6 +200,11 @@ export default function App() {
           })();
       const injectates = indexed?.injectates || [];
       const ccfRegions = indexed?.ccf_regions || [];
+
+      // Prefer papers whose passages actually carry coordinates.
+      const coordPassages = (entry.passages || []).filter((p) => p.has_coords);
+      if (coordPassages.length) score += 3;
+      else if ((entry.passages || []).length) score += 1;
 
       return { entry: { ...entry, coords, injectates, ccfRegions, coordPassages }, score };
     });
@@ -239,33 +232,39 @@ export default function App() {
 
     const citationPool = relevantRefs.length
       ? relevantRefs.map((r, i) => {
-        // PRIMARY evidence: the raw injection passage(s). The LLM reads these and parses
-        // AP/ML/DV itself — handling ranges, ±, reversed order, lambda/bregma, µm depths.
-        const passageBlock = (r.passages && r.passages.length)
-          ? r.passages.map((ps) => {
-              const flags = [
-                ps.reference_point && ps.reference_point !== 'unknown' ? `ref:${ps.reference_point}` : null,
-                ps.has_coords ? 'has-coords' : 'no-explicit-coords',
-                ps.injectate_hint ? `injectate:${ps.injectate_hint}` : null,
-                ps.source_field ? `from:${ps.source_field}` : null,
-              ].filter(Boolean).join(', ');
-              const regs = (ps.ccf_regions || []).join('/') || (ps.region_terms || []).join('/') || 'region unclear';
-              return `      • [${regs}${flags ? ` | ${flags}` : ''}] "${(ps.text || '').slice(0, 600).trim()}"`;
-            }).join('\n')
-          : null;
-
-        // Fallback pre-parsed coordinate line (legacy index).
-        const coordLine = r.coords.length
-          ? r.coords.map((c) => `AP ${c.ap} mm, ML ${c.ml} mm${c.dv ? `, DV ${c.dv} mm` : ' (DV not stated)'}`).join(' | ')
-          : null;
-
-        const header = `[${i + 1}] PMID:${r.pmid}${r.title ? ` — "${r.title}"` : ''} (regions: ${r.regions.join(', ') || 'unspecified'})`;
-
-        if (passageBlock) {
-          return `${header}\n   Injection passage(s) — parse coordinates from THIS text; bind them to the region named in the SAME passage:\n${passageBlock}`;
+        // ── TRUNCATION FIX ──────────────────────────────────────────────
+        // The whole point of the passage index is that the coordinate sentence
+        // is IN the passage. Previously this sliced a generic excerpt to 450 chars,
+        // which cut off coordinates sitting deep in a methods paragraph (e.g.
+        // PMID 38605812 / 40848722: coords appear ~char 600, after anesthesia
+        // boilerplate). Now we surface the FULL coord-bearing passage(s) verbatim
+        // so the LLM sees the numbers and parses them itself.
+        const coordPassages = r.coordPassages || [];
+        let passageBlock;
+        if (coordPassages.length) {
+          passageBlock = coordPassages
+            .map((p) => {
+              const ref = p.reference_point && p.reference_point !== 'unknown'
+                ? ` [coordinates relative to ${p.reference_point}]` : '';
+              return `Injection passage${ref}: "${p.text.trim()}"`;
+            })
+            .join('\n   ');
+        } else if ((r.passages || []).length) {
+          // No explicit coord flag — still give the model the fullest passage it has.
+          const longest = [...r.passages].sort((a, b) => (b.text || '').length - (a.text || '').length)[0];
+          passageBlock = `Passage (no explicit coordinates detected): "${(longest.text || '').trim().slice(0, 900)}"`;
+        } else {
+          const fallback = (r.methodsText || r.abstractText || '').trim().slice(0, 700);
+          passageBlock = fallback
+            ? `Methods excerpt: ${fallback}${fallback.length >= 700 ? '…' : ''}`
+            : 'No indexed passage text available for this paper.';
         }
-        // No passage — fall back to the legacy coordinate line if present.
-        return `${header}\n   ${coordLine ? `Pre-parsed coordinates (verify against source): ${coordLine}` : 'No injection passage or coordinates indexed for this paper.'}`;
+
+        const ccfSummary = r.ccfRegions.length
+          ? `Candidate Allen CCFv3 region match(es): ${r.ccfRegions.map((c) => c.acronym || c).join(', ')}.`
+          : '';
+
+        return `[${i + 1}] PMID:${r.pmid}${r.title ? ` — "${r.title}"` : ''} (regions: ${r.regions.join(', ') || 'unspecified'})\n   ${passageBlock}${ccfSummary ? `\n   ${ccfSummary}` : ''}`;
       }).join('\n\n')
       : '(no directly matching surgical literature indexed for this query — answer from general veterinary/stereotaxic knowledge and say so)';
 
@@ -296,9 +295,9 @@ IMPORTANT PROCEDURE GUIDANCE: When responding to surgical protocol queries, prov
 ## SURGICAL LITERATURE CITATION RULES — HARD CONSTRAINT
 1. Cite ONLY PMIDs from the numbered RELEVANT SURGICAL LITERATURE list below. Never invent, guess, or recall a PMID from general training knowledge — if it isn't numbered below, don't cite it.
 2. Format every citation as exactly [PMID:XXXXXXX] (no extra punctuation inside the brackets) — this is auto-converted into a clickable PubMed link, so never wrap it in markdown link syntax yourself.
-3. COORDINATE PARSING: Each cited paper provides one or more "Injection passage(s)" — the actual sentence(s) from the paper's methods. Read AP/ML/DV, volume, flow rate, and reference point (bregma vs lambda) DIRECTLY from that passage text. Passages may state coordinates in any form — "AP -2.0", "-6.25 mm anterior-posterior", ranges like "1.7–1.07", ± values, or depths in µm. Parse them faithfully; do NOT round, invent, or fill gaps. If a passage marks "has-coords" it contains numeric coordinates; if it marks "no-explicit-coords", it does not — say "not stated in passage" for that field.
-4. REGION-BINDING — CRITICAL: Coordinates belong ONLY to the region named in the SAME passage. If a passage describes Crus I/II, its coordinates are for Crus I/II — NEVER present them as simplex, or vice versa. If NO passage names the specific region the user asked about, say so plainly and do not substitute a different region's coordinates. Note the reference point: lambda-referenced coordinates are NOT interchangeable with bregma-referenced ones.
-5. TABLE RULE: whenever the user asks about coordinates/targets/parameters for one or more brain regions, respond with a markdown table (GitHub-flavored pipes) with columns: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference (bregma/lambda) | Injected Material | Notes. Populate strictly from the passage text for that PMID. Multiple coordinate sets → separate rows. Missing values → "not stated in passage". List every relevant paper, most-relevant first.
+3. COORDINATE PARSING: The "Injection passage" text quoted for each paper is the verbatim source sentence(s). PARSE the AP/ML/DV values, volume, flow rate, and titer directly FROM that passage text. Handle every phrasing variant: "AP: -2.0 mm", "-2.0 mm anterior-posterior", "2.8 mm posterior ... 1.4 mm lateral to lambda", ranges (150–200 nL), ± values, and depths in µm. If the passage states values, you MUST report them — do not write "not stated" when the numbers are present in the quoted passage.
+4. REGION BINDING — CRITICAL: Coordinates belong ONLY to the region named in the SAME passage. A passage may mention multiple structures (e.g. simple lobule AND interposed nucleus) with DIFFERENT coordinates — keep each coordinate set bound to its own structure. NEVER transfer one structure's coordinates to another (e.g. never present Crus I/II numbers as "simplex"). Note the reference point (bregma vs lambda) explicitly — they are NOT interchangeable and a lambda-referenced AP is not the same as a bregma-referenced AP.
+5. TABLE RULE: whenever the user asks about coordinates/targets/parameters for one or more regions, respond with a markdown table with columns: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference (bregma/lambda) | Injected Material | Volume/Flow | Notes. Populate strictly from the quoted passages. If a specific value truly is absent from the passage, write "not stated in passage". List multiple coordinate sets from one paper on separate rows. Most-recent first (the pool is pre-sorted).
 6. If no papers in the pool are relevant to the requested region, say so plainly and offer general stereotaxic atlas guidance instead of fabricating citations.
 7. Always close literature-grounded answers with a one-line reminder that this is not a substitute for IACUC-approved protocols or veterinary/atlas verification.
 
@@ -310,7 +309,9 @@ ${hwContext}
 ## HAMILTON SYRINGE COMPATIBILITY TABLE
 ${syringeTable}
 
-## RELEVANT SURGICAL LITERATURE (passage-first index, ${relevantRefs.length} papers, most relevant first)
+## RELEVANT SURGICAL LITERATURE (passage-first index, ${relevantRefs.length} papers, most relevant/recent first)
+Each paper below quotes its verbatim injection passage(s). Parse coordinates/volume/flow/titer directly from the quoted text.
+
 ${citationPool}`;
 
     return { role: 'system', content };
@@ -428,9 +429,6 @@ ${citationPool}`;
     'What AP/ML/DV coordinates and infusion rate are typical for cerebellar simplex lobule injections in mice?',
     'The injected volume seems consistently too low — what could cause that?',
   ];
-
-  // Literature tab now lists passage papers (the surgery-relevant subset), not the raw corpus.
-  const literatureList = [...passageIndex.values()];
 
   return (
     <div className="app">
@@ -586,15 +584,15 @@ ${citationPool}`;
         {activeTab === 'literature' && (
           <div className="ref-view">
             <h2>Surgical Literature Corpus</h2>
-            <p>{literatureList.length} papers with injection passages indexed for grounding chat answers.</p>
+            <p>{passageIndex.size} papers with injection passages indexed for grounding chat answers.</p>
             <div className="paper-list">
-              {literatureList.slice(0, 100).map((p) => (
+              {[...passageIndex.values()].slice(0, 100).map((p) => (
                 <div key={p.pmid} className="paper-card">
                   <div className="paper-meta">
                     <a href={`https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/`} target="_blank" rel="noreferrer">PMID:{p.pmid}</a>
                     <span>{(p.ccf_regions || []).join(', ')}</span>
                   </div>
-                  <p>{((p.passages && p.passages[0] && p.passages[0].text) || p.title || '').slice(0, 300)}...</p>
+                  <p>{((p.passages || [])[0]?.text || '').slice(0, 300)}...</p>
                 </div>
               ))}
             </div>
