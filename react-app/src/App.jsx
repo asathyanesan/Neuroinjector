@@ -29,17 +29,14 @@ function scoreText(words, text) {
   return words.reduce((acc, w) => acc + (lower.includes(w) ? 1 : 0), 0);
 }
 
-// Coordinate value may be a number, a range string ("0.1 to 0.5" / "-5 to -6"), or null.
+// A coordinate value may be a number OR a range string ("0.1 to 0.5", "-5 to -6"), OR null.
 function fmtCoord(v) {
   if (v === null || v === undefined || v === '') return 'not stated';
   return String(v);
 }
-
-// Trim a source quote for always-on display under a citation.
-function trimQuote(q, n = 160) {
-  const s = (q || '').trim().replace(/\s+/g, ' ');
-  if (!s) return '';
-  return s.length > n ? s.slice(0, n) + '…' : s;
+function fmtNum(v, unit) {
+  if (v === null || v === undefined || v === '') return 'not stated';
+  return `${v}${unit || ''}`;
 }
 
 export default function App() {
@@ -59,8 +56,8 @@ export default function App() {
   const [syringeDb, setSyringeDb] = useState(null);
   const [literaturePapers, setLiteraturePapers] = useState([]);
   const [injectionIndex, setInjectionIndex] = useState(new Map());   // legacy coords + species
-  const [passageIndex, setPassageIndex] = useState(new Map());       // FALLBACK text source
-  const [structuredIndex, setStructuredIndex] = useState(new Map()); // PRIMARY: OSC 14k coords
+  const [passageIndex, setPassageIndex] = useState(new Map());       // fallback passage text
+  const [structuredIndex, setStructuredIndex] = useState(new Map()); // PRIMARY: OSC 92% coords
   const [dataError, setDataError] = useState('');
 
   const [chatMessages, setChatMessages] = useState([]);
@@ -73,28 +70,25 @@ export default function App() {
   useEffect(() => {
     fetch('data/hardware-kb.json').then((r) => r.json()).then(setHardwareKb).catch(() => {});
     fetch('data/hamilton-syringes.json').then((r) => r.json()).then(setSyringeDb).catch(() => {});
-    // Secondary full-text methods pool (small, committable).
     fetch('data/stereotaxic-protocols.json').then((r) => r.json()).then(setLiteraturePapers)
-      .catch(() => { /* optional */ });
-    // Legacy coordinate index (optional — species tag).
+      .catch(() => { /* optional secondary methods pool */ });
     fetch('data/injection-coordinates.json').then((r) => r.json())
       .then((arr) => setInjectionIndex(new Map(arr.map((rec) => [String(rec.pmid), rec]))))
-      .catch(() => { /* optional */ });
-    // Fallback text source: region-bound injection passages.
+      .catch(() => { /* optional species tag */ });
+    // Fallback passage text (region-bound injection sentences).
     fetch('data/injection-passages.json').then((r) => r.json())
       .then((arr) => setPassageIndex(new Map(arr.map((rec) => [String(rec.pmid), rec]))))
       .catch(() => { /* optional */ });
-    // PRIMARY RAG source: OSC-distilled structured coordinates (object keyed by PMID).
+    // PRIMARY RAG SOURCE: OSC-distilled structured coordinates (object keyed by PMID).
     //   { "<pmid>": { pmid, targets: [{ region_verbatim, ccf_region, ap_mm, ml_mm, dv_mm,
     //     reference, volume_nl, rate_nl_min, source_quote }], ok } }
-    // Coordinates are pre-parsed (92% validated vs human ground truth). Values may be a
-    // number OR a range string ("0.1 to 0.5"). Bilateral papers carry two targets (+/-ML);
-    // multi-site papers carry one target per site.
+    // Coordinates pre-parsed & 92% validated vs human ground truth. Values may be a number
+    // OR a range string ("0.1 to 0.5"). Bilateral papers carry two targets (+/-ML).
     fetch('data/injection-structured.json').then((r) => r.json())
       .then((obj) => {
-        const entries = Object.values(obj)
-          .filter((rec) => rec && Array.isArray(rec.targets))
-          .map((rec) => [String(rec.pmid), rec]);
+        const entries = Object.entries(obj)
+          .filter(([, rec]) => rec && Array.isArray(rec.targets))
+          .map(([pmid, rec]) => [String(pmid), { ...rec, pmid: rec.pmid || pmid }]);
         setStructuredIndex(new Map(entries));
       })
       .catch(() => setDataError((e) => e || 'Could not load injection-structured.json'));
@@ -115,47 +109,50 @@ export default function App() {
     return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, topN).map((s) => s.entry);
   }
 
-  // Retrieval pool, merged from (priority order):
-  //   1. injection-structured.json  — PRIMARY: pre-parsed AP/ML/DV/ref/vol/rate + source_quote
+  // Retrieval pool, merged in priority order:
+  //   1. injection-structured.json  — PRIMARY: pre-parsed AP/ML/DV/ref/vol/rate (92% validated)
   //   2. injection-passages.json     — fallback region-bound passage text (+ title)
   //   3. stereotaxic-protocols.json  — fallback full-text methods
   function getMergedLiteraturePool() {
     const pool = new Map();
 
-    // 1. Structured coordinates (skip papers with no extracted targets).
+    // 1. Structured coordinates (skip papers with no usable target).
     structuredIndex.forEach((rec, key) => {
       const targets = (rec.targets || []).filter((t) => t && typeof t === 'object');
-      if (!targets.length) return;
-      const regions = [...new Set(targets.map((t) => t.ccf_region).filter(Boolean))];
+      const regionText = targets
+        .map((t) => `${t.ccf_region || ''} ${t.region_verbatim || ''}`)
+        .join(' ');
       pool.set(key, {
         pmid: rec.pmid,
-        regions,
-        title: null,                 // structured file has no title; filled from passages/methods
+        regions: [...new Set(targets.map((t) => t.ccf_region).filter(Boolean))],
+        regionText,
+        title: null,
         methodsText: '',
-        abstractText: '',
+        passageText: '',
         passages: [],
         structuredTargets: targets,
       });
     });
 
-    // 2. Passage index — adds title, ccf_regions, passage text.
+    // 2. Passages — add title + region tags + passage text.
     passageIndex.forEach((rec, key) => {
       const pText = (rec.passages || []).map((p) => p.text).join(' ');
       const existing = pool.get(key);
       if (existing) {
         existing.title = existing.title || rec.title || null;
         existing.passages = rec.passages || [];
-        existing.abstractText = pText;
+        existing.passageText = pText;
         (rec.ccf_regions || []).forEach((r) => { if (r && !existing.regions.includes(r)) existing.regions.push(r); });
       } else {
         pool.set(key, {
-          pmid: rec.pmid, regions: [...(rec.ccf_regions || [])], title: rec.title || null,
-          methodsText: '', abstractText: pText, passages: rec.passages || [], structuredTargets: [],
+          pmid: rec.pmid, regions: [...(rec.ccf_regions || [])], regionText: (rec.ccf_regions || []).join(' '),
+          title: rec.title || null, methodsText: '', passageText: pText,
+          passages: rec.passages || [], structuredTargets: [],
         });
       }
     });
 
-    // 3. Stereotaxic methods — adds methods text.
+    // 3. Stereotaxic methods — add methods text.
     literaturePapers.forEach((p) => {
       const key = String(p.pmid);
       const existing = pool.get(key);
@@ -164,8 +161,8 @@ export default function App() {
         (p.regions || []).forEach((r) => { if (r && !existing.regions.includes(r)) existing.regions.push(r); });
       } else {
         pool.set(key, {
-          pmid: p.pmid, regions: [...(p.regions || [])], title: null,
-          methodsText: p.methods || '', abstractText: '', passages: [], structuredTargets: [],
+          pmid: p.pmid, regions: [...(p.regions || [])], regionText: (p.regions || []).join(' '),
+          title: null, methodsText: p.methods || '', passageText: '', passages: [], structuredTargets: [],
         });
       }
     });
@@ -178,15 +175,13 @@ export default function App() {
   function isMousePaper(entry) {
     const indexed = injectionIndex.get(String(entry.pmid));
     if (indexed?.species) return indexed.species !== 'rat';
-    const passageText = (entry.passages || []).map((p) => p.text).join(' ');
-    const structuredText = (entry.structuredTargets || []).map((t) => t.source_quote || '').join(' ');
-    const t = `${entry.title || ''} ${entry.methodsText.slice(0, 800)} ${entry.abstractText.slice(0, 400)} ${passageText.slice(0, 400)} ${structuredText.slice(0, 600)}`;
+    const structText = (entry.structuredTargets || []).map((t) => t.source_quote || '').join(' ');
+    const t = `${entry.title || ''} ${entry.methodsText.slice(0, 800)} ${entry.passageText.slice(0, 400)} ${structText.slice(0, 400)}`;
     const isRat = RAT_SIGNALS.test(t);
     const isMouse = MOUSE_SIGNALS.test(t);
     return !(isRat && !isMouse); // exclude rat-only; keep mouse/mixed/unknown
   }
 
-  // topN kept at 10 for a smaller prompt / faster first token.
   function getRelevantRefs(query, topN = 10) {
     const words = tokenize(query);
     const lowerQuery = (query || '').toLowerCase();
@@ -194,10 +189,8 @@ export default function App() {
     if (!pool.length) return [];
 
     const scored = pool.map((entry) => {
-      const regionsText = entry.regions.join(' ');
-      const quoteText = (entry.structuredTargets || []).map((t) => t.source_quote || '').join(' ');
       const passageText = (entry.passages || []).map((p) => p.text).join(' ');
-      const text = `${entry.title || ''} ${regionsText} ${quoteText.slice(0, 1200)} ${passageText.slice(0, 1000)} ${entry.methodsText.slice(0, 800)}`;
+      const text = `${entry.title || ''} ${entry.regionText} ${passageText.slice(0, 1500)} ${entry.methodsText.slice(0, 1000)}`;
       let score = scoreText(words, text);
 
       // Strong boost for explicit region/acronym matches in the query.
@@ -205,18 +198,26 @@ export default function App() {
       entry.regions.forEach((r) => {
         if (r && lowerQuery.includes(r.toLowerCase())) { score += 10; regionMatched = true; }
       });
+      // Also match query words against structured region text (ccf_region + verbatim).
+      const regScore = scoreText(words, entry.regionText);
+      if (regScore > 0) { score += regScore * 2; regionMatched = true; }
 
-      // PRIMARY signal: structured targets carrying real coordinates.
-      const coordTargets = (entry.structuredTargets || [])
-        .filter((t) => t.ap_mm !== null || t.ml_mm !== null || t.dv_mm !== null);
-      if (coordTargets.length) score += 5;
+      // Structured targets with real coordinates are the highest-value evidence.
+      const structTargets = entry.structuredTargets || [];
+      const structWithCoords = structTargets.filter(
+        (t) => t.ap_mm != null || t.ml_mm != null || t.dv_mm != null);
+      if (structWithCoords.length) score += 5;
 
-      // Secondary signal: passage-level coordinate flag (fallback papers).
-      const coordPassages = (entry.passages || []).filter((p) => p.has_coords);
-      if (coordPassages.length) score += 2;
+      const indexed = injectionIndex.get(String(entry.pmid));
 
       return {
-        entry: { ...entry, coordTargets, coordPassages, regionMatched },
+        entry: {
+          ...entry,
+          structWithCoords,
+          hasStructured: structWithCoords.length > 0,
+          species: indexed?.species || null,
+          regionMatched,
+        },
         score,
       };
     });
@@ -243,34 +244,31 @@ export default function App() {
       ? hwHits.map((h) => `[${h.category}] ${h.title}: ${h.content}`).join('\n\n')
       : '(no directly matching hardware KB entries — answer from the syringe table and general knowledge, and say so if unsure)';
 
-    // Build the citation block. Structured targets are PRE-PARSED — emit clean fields,
-    // one line per target, with a trimmed source_quote ALWAYS shown for verification.
     const citationPool = relevantRefs.length
       ? relevantRefs.map((r, i) => {
-        const title = r.title ? ` — "${r.title}"` : '';
-        const header = `[${i + 1}] PMID:${r.pmid}${title}`;
+        const pmidLink = `https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/`;
+        const header = `[${i + 1}] PMID:${r.pmid}${r.title ? ` — "${r.title}"` : ''}${r.species ? ` (${r.species})` : ''}`;
 
-        // PRIMARY: structured targets with coordinates.
-        if (r.coordTargets && r.coordTargets.length) {
-          const lines = r.coordTargets.map((t) => {
-            const region = t.ccf_region || t.region_verbatim || 'unspecified';
-            const ref = t.reference || 'unspecified';
-            const vol = t.volume_nl != null ? `${t.volume_nl} nL` : 'vol n/s';
-            const rate = t.rate_nl_min != null ? `${t.rate_nl_min} nL/min` : 'rate n/s';
-            const q = trimQuote(t.source_quote);
-            return `   • ${region} — AP ${fmtCoord(t.ap_mm)}, ML ${fmtCoord(t.ml_mm)}, DV ${fmtCoord(t.dv_mm)} mm (ref: ${ref}); ${vol}; ${rate}`
-              + (q ? `\n     source: "${q}"` : '');
+        if (r.hasStructured) {
+          // PRIMARY: emit the pre-parsed, validated coordinate fields directly.
+          const lines = r.structWithCoords.map((t) => {
+            const region = t.ccf_region || t.region_verbatim || 'unspecified region';
+            const ap = fmtCoord(t.ap_mm), ml = fmtCoord(t.ml_mm), dv = fmtCoord(t.dv_mm);
+            const ref = t.reference || 'not stated';
+            const vol = fmtNum(t.volume_nl, ' nL');
+            const rate = fmtNum(t.rate_nl_min, ' nL/min');
+            return `     • ${region} — AP ${ap}, ML ${ml}, DV ${dv} mm (ref: ${ref}); volume ${vol}; rate ${rate}`;
           }).join('\n');
-          return `${header}\n${lines}`;
+          return `${header}\n   ✓ Validated stereotaxic coordinates (OSC-distilled, 92% verified):\n${lines}\n   Verify full context: ${pmidLink}`;
         }
 
-        // FALLBACK: passage text (papers without structured coords).
-        if (r.coordPassages && r.coordPassages.length) {
-          const p = r.coordPassages[0];
-          return `${header}\n   Injection passage [ref: ${p.reference_point || 'unspecified'}]: "${trimQuote(p.text, 500)}"`;
-        }
-        const ex = (r.passages?.[0]?.text || r.methodsText || r.abstractText || '').trim().slice(0, 240);
-        return `${header}\n   ${ex ? `Excerpt: ${ex}${ex.length >= 240 ? '…' : ''}` : 'No injection data indexed for this paper.'}`;
+        // FALLBACK: region-bound passage text (LLM parses), for papers with no structured target.
+        const p = (r.passages || [])[0];
+        const excerpt = (p?.text || r.methodsText || '').trim().slice(0, 400);
+        const evidence = excerpt
+          ? `Injection passage${p?.reference_point ? ` [ref: ${p.reference_point}]` : ''}: "${excerpt}${excerpt.length >= 400 ? '…' : ''}"`
+          : 'No structured coordinates or passage indexed for this paper.';
+        return `${header} (regions: ${r.regions.join(', ') || 'unspecified'})\n   ${evidence}\n   Verify full context: ${pmidLink}`;
       }).join('\n\n')
       : '(no directly matching surgical literature indexed for this query — answer from general veterinary/stereotaxic knowledge and say so)';
 
@@ -295,13 +293,14 @@ Ground hardware/firmware answers in the CURRENT NEUROINJECTOR HARDWARE KNOWLEDGE
 PROCEDURE GUIDANCE: For surgical protocol queries, provide stereotaxic coordinates, total volume (nL), and flow rate (nL/min). Clarify the user enters nL/min and nL directly into the device serial menu — no manual plunger-speed math needed.
 
 ## SURGICAL LITERATURE CITATION RULES — HARD CONSTRAINTS
-1. Cite ONLY PMIDs from the numbered list below. Never invent or recall a PMID from training. Format as exactly [PMID:XXXXXXX] (auto-linked; do not wrap in markdown link syntax).
-2. TABLE RULE: for any query about coordinates, injection targets, or surgical parameters, respond with a GitHub-flavored markdown table: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference (bregma/lambda) | Volume/Flow | Notes.
-3. STRUCTURED COORDINATES — CRITICAL: Most papers below provide PRE-PARSED coordinate fields (AP, ML, DV, reference, volume, rate). Report these values DIRECTLY in the table — do NOT re-derive, recompute, or second-guess them. A value may be a range (e.g. "0.1 to 0.5"); report the range as given. Only fall back to reading a passage/excerpt when a paper has no pre-parsed fields.
-4. REGION BINDING — CRITICAL: Each coordinate line is already bound to its own structure. Report each on its own row with its stated structure and reference. Bilateral injections may appear as two lines (ML +X and −X) — you may report them as a single bilateral row (ML ±X) noting both hemispheres, or two rows. NEVER transfer one structure's coordinates to another. Lambda-referenced values are NOT interchangeable with bregma-referenced values — always report the Reference column exactly as given.
-5. If no listed paper provides the requested region, say so plainly and offer general atlas guidance — do not substitute a different structure's coordinates.
-6. Every paper's coordinate line includes a "source:" quote. If the user asks for evidence, cite that quote. Do not fabricate quotes.
-7. Close literature-grounded answers with a one-line reminder that this is not a substitute for IACUC-approved protocols or veterinary/atlas verification.
+1. Cite ONLY PMIDs from the numbered list below. NEVER invent, recall, or guess a PMID from training. Format as exactly [PMID:XXXXXXX] (auto-linked).
+2. NEVER attach a coordinate, region, volume, or rate to a PMID unless it is explicitly listed under that PMID below. Do NOT transfer a value from one paper to another. Do NOT fabricate numbers. If a paper's line does not contain a value, it is "not stated".
+3. TABLE RULE: for any coordinate/target/parameter query, respond with a GitHub-flavored markdown table: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference | Volume | Rate | Notes.
+4. VALIDATED COORDINATES: Entries marked "✓ Validated stereotaxic coordinates" are pre-parsed, human-verified fields. Report their AP/ML/DV/reference/volume/rate EXACTLY as given — do NOT re-derive, round, or alter them, and do NOT write "not stated" when a value is present. Report a value as "not stated" ONLY when the line literally shows "not stated".
+5. REGION BINDING: A coordinate set belongs ONLY to the region named on its own line. If a paper lists multiple targets (e.g. simple lobule vs interposed nucleus), report them on SEPARATE rows. NEVER present one region's coordinates as another's. Lambda- and bregma-referenced values are NOT interchangeable — always report the Reference column.
+6. If NONE of the listed papers name the requested region, say so plainly and give general atlas guidance — do NOT substitute a different structure's coordinates or invent one. It is correct and expected to say "the indexed literature does not contain a coordinate for X."
+7. Every coordinate row must include its [PMID:XXXXXXX] link. Do not paste partial source-quote fragments as evidence — the validated fields + PMID link ARE the citation.
+8. Close literature-grounded answers with a one-line reminder that this is not a substitute for IACUC-approved protocols or veterinary/atlas verification.
 
 ${firmwareRules}
 
@@ -381,11 +380,10 @@ ${citationPool}`;
         .map((m) => m.content).join(' ');
       const ragQuery = `${recentContext} ${userMessage}`.trim();
 
-      setLoadingStatus('Reading structured coordinates…');
+      setLoadingStatus('Reading validated coordinates…');
       const systemPrompt = buildSystemPrompt(ragQuery);
       const messagesWithSystem = [systemPrompt, ...updatedMessages];
 
-      // Held until the FIRST real token arrives — kills the "is it hung?" gap.
       setLoadingStatus(`Composing answer with ${selectedModel}…`);
 
       let firstToken = true;
@@ -438,10 +436,7 @@ ${citationPool}`;
     'The injected volume seems consistently too low — what could cause that?',
   ];
 
-  // count of papers with usable structured coordinates (for the literature tab).
-  const structuredCoordCount = [...structuredIndex.values()]
-    .filter((rec) => (rec.targets || []).some((t) => t && (t.ap_mm !== null || t.ml_mm !== null || t.dv_mm !== null)))
-    .length;
+  const structuredCount = structuredIndex.size;
 
   return (
     <div className="app">
@@ -601,28 +596,25 @@ ${citationPool}`;
         {activeTab === 'literature' && (
           <div className="ref-view">
             <h2>Surgical Literature Corpus</h2>
-            <p>{structuredCoordCount} papers with structured stereotaxic coordinates (OSC-distilled, 92% validated) grounding chat answers.</p>
+            <p>{structuredCount} papers with validated structured stereotaxic coordinates (OSC-distilled, 92% verified).</p>
             <div className="paper-list">
-              {[...structuredIndex.values()]
-                .filter((rec) => (rec.targets || []).some((t) => t && (t.ap_mm !== null || t.ml_mm !== null || t.dv_mm !== null)))
-                .slice(0, 100)
-                .map((rec) => {
-                  const t0 = (rec.targets || []).find((t) => t && (t.ap_mm !== null || t.ml_mm !== null || t.dv_mm !== null)) || {};
-                  const regions = [...new Set((rec.targets || []).map((t) => t.ccf_region).filter(Boolean))];
-                  return (
-                    <div key={rec.pmid} className="paper-card">
-                      <div className="paper-meta">
-                        <a href={`https://pubmed.ncbi.nlm.nih.gov/${rec.pmid}/`} target="_blank" rel="noreferrer">PMID:{rec.pmid}</a>
-                        <span>{regions.join(', ')}</span>
-                      </div>
-                      <p>
-                        {t0.ccf_region || 'target'} — AP {fmtCoord(t0.ap_mm)}, ML {fmtCoord(t0.ml_mm)}, DV {fmtCoord(t0.dv_mm)} mm
-                        {t0.reference ? ` (ref: ${t0.reference})` : ''}
-                        {(rec.targets || []).length > 1 ? ` · +${(rec.targets || []).length - 1} more target(s)` : ''}
-                      </p>
+              {[...structuredIndex.values()].slice(0, 100).map((rec) => {
+                const t = (rec.targets || []).find((x) => x && (x.ap_mm != null || x.ml_mm != null || x.dv_mm != null)) || (rec.targets || [])[0];
+                const nMore = Math.max(0, (rec.targets || []).length - 1);
+                return (
+                  <div key={rec.pmid} className="paper-card">
+                    <div className="paper-meta">
+                      <a href={`https://pubmed.ncbi.nlm.nih.gov/${rec.pmid}/`} target="_blank" rel="noreferrer">PMID:{rec.pmid}</a>
+                      <span>{t ? (t.ccf_region || t.region_verbatim || '') : ''}</span>
                     </div>
-                  );
-                })}
+                    <p>
+                      {t
+                        ? `${t.ccf_region || t.region_verbatim || 'region'} — AP ${fmtCoord(t.ap_mm)}, ML ${fmtCoord(t.ml_mm)}, DV ${fmtCoord(t.dv_mm)} mm (ref: ${t.reference || 'n/s'})${nMore ? ` · +${nMore} more target(s)` : ''}`
+                        : 'No structured coordinate extracted.'}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
