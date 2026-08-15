@@ -1,59 +1,44 @@
+# Editor / OS
 .vscode
 ~$*
+*.ps1
 
-# Repo-root secrets (e.g. NCBI_API_KEY for scripts/eutils-manual-search.js)
+# Secrets
 .env
 .env.local
-
-# React assistant app (built output is committed to /assistant/ for GitHub Pages, see scripts/publish-assistant.js)
-react-app/node_modules/
-react-app/dist/
 react-app/.env
 react-app/.env.local
 
-# Legacy Python assistant prototype (Chroma vector stores, venvs, caches)
+# React build deps (built output committed to /assistant/ for GitHub Pages)
+react-app/node_modules/
+react-app/dist/
+
+# Legacy Python prototype
 .venv/
 __pycache__/
-assistant-legacy/db/
 *.pyc
+assistant-legacy/db/
 
-# Raw Allen Institute CCFv3 source cache (huge, regenerable via scripts/Python_Asset_Exporter.py
-# and scripts/export_region_centroids.py — only the exported PNGs/JSON in react-app/public/atlas
-# are committed).
+# Large / regenerable DATA - never commit
+surgical-protocols*.json
+*GOOD*.json
+*backup*.json
+react-app/public/data/surgical-protocols.json
+assistant/data/surgical-protocols*.json
+
+# Raw Allen CCFv3 caches (only exported PNGs/JSON in public/atlas are committed)
 scripts/data/
-surgical-protocols*.json
-*.GOOD*.json
-*.backup-*.json
-assistant/data/surgical-protocols*.json
+react-app/public/atlas/annotation_25.nrrd
+react-app/public/atlas/ccf_ontology.json
+react-app/public/atlas/structure_graph.json
 
-surgical-protocols*.json
-*.GOOD*.json
-*.backup-*.json
-assistant/data/surgical-protocols*.json
+# OSC pipeline intermediates (kept local, regenerable)
+scripts/*.jsonl
+scripts/injection-structured*.json
 
-surgical-protocols*.json
-*.GOOD*.json
-*.backup-*.json
+# Root scratch
+repo_inventory.py
 
-surgical-protocols*.json
-*GOOD*.json
-*backup*.json
-
-react-app/public/data/surgical-protocols.json
-surgical-protocols*.json
-*GOOD*.json
-*backup*.json
-
-react-app/public/data/surgical-protocols.json
-surgical-protocols*.json
-*GOOD*.json
-*backup*.json
-
-surgical-protocols*.json
-*GOOD*.json
-*backup*.json
-
-surgical-protocols*.json
-*GOOD*.json
-*backup*.json
-*.ps1
+assistant/atlas/annotation_25.nrrd
+assistant/atlas/ccf_ontology.json
+assistant/atlas/structure_graph.json
