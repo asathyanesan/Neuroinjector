@@ -250,14 +250,16 @@ export default function App() {
         const header = `[${i + 1}] PMID:${r.pmid}${r.title ? ` — "${r.title}"` : ''}${r.species ? ` (${r.species})` : ''}`;
 
         if (r.hasStructured) {
-          // PRIMARY: emit the pre-parsed, validated coordinate fields directly.
+          // PRIMARY: emit the pre-parsed, validated coordinate fields + verbatim source quote.
           const lines = r.structWithCoords.map((t) => {
             const region = t.ccf_region || t.region_verbatim || 'unspecified region';
             const ap = fmtCoord(t.ap_mm), ml = fmtCoord(t.ml_mm), dv = fmtCoord(t.dv_mm);
             const ref = t.reference || 'not stated';
             const vol = fmtNum(t.volume_nl, ' nL');
             const rate = fmtNum(t.rate_nl_min, ' nL/min');
-            return `     • ${region} — AP ${ap}, ML ${ml}, DV ${dv} mm (ref: ${ref}); volume ${vol}; rate ${rate}`;
+            const quote = (t.source_quote || '').trim();
+            const quoteLine = quote ? `\n       source_quote: "${quote}"` : '';
+            return `     • ${region} — AP ${ap}, ML ${ml}, DV ${dv} mm (ref: ${ref}); volume ${vol}; rate ${rate}${quoteLine}`;
           }).join('\n');
           return `${header}\n   ✓ Validated stereotaxic coordinates (OSC-distilled, 92% verified):\n${lines}\n   Verify full context: ${pmidLink}`;
         }
@@ -292,14 +294,23 @@ Ground hardware/firmware answers in the CURRENT NEUROINJECTOR HARDWARE KNOWLEDGE
 
 PROCEDURE GUIDANCE: For surgical protocol queries, provide stereotaxic coordinates, total volume (nL), and flow rate (nL/min). Clarify the user enters nL/min and nL directly into the device serial menu — no manual plunger-speed math needed.
 
+## HOW THE COORDINATE DATA WAS EXTRACTED (interpret it the same way)
+The validated coordinate lines below were distilled from each paper's Methods text under these conventions — apply the SAME interpretation when reading them:
+- Coordinates are in mm. "midline" ML = 0. "caudal/posterior to bregma" = negative AP; "anterior/rostral to bregma" = positive AP. DV is injection depth; "X mm below pial/dura/skull" sets the reference accordingly, otherwise reference is bregma or lambda as stated.
+- A value may be a single number OR a range string ("0.1 to 0.5", "-5 to -6") when the paper reports a span or multiple depths at one site — report ranges verbatim, do NOT average them.
+- Volume and rate are already normalized to nanoliters (µL was ×1000, mL ×1,000,000). A rodent brain injection is essentially never < 1 nL; treat any sub-1 nL volume or sub-0.1 nL/min rate as unreliable and report it as "not stated (source value unreliable)".
+- MULTI-SITE: a paper with distinct sub-sites (e.g. dorsal vs ventral CA1) has a SEPARATE line per site — keep them on separate rows.
+- BILATERAL: a bilateral injection appears as TWO lines, ML +X and ML −X, sharing the same AP/DV — this is correct (two physical injection sites), report both.
+- WORD-SENSE: "simplex" in "herpes simplex virus"/"HSV" is the VIRUS, not the cerebellar simplex lobule. A region named only as an anatomical LANDMARK is not an injection target. Only treat a line as evidence for a region when that region is the actual injection/implant target.
+
 ## SURGICAL LITERATURE CITATION RULES — HARD CONSTRAINTS
 1. Cite ONLY PMIDs from the numbered list below. NEVER invent, recall, or guess a PMID from training. Format as exactly [PMID:XXXXXXX] (auto-linked).
-2. NEVER attach a coordinate, region, volume, or rate to a PMID unless it is explicitly listed under that PMID below. Do NOT transfer a value from one paper to another. Do NOT fabricate numbers. If a paper's line does not contain a value, it is "not stated".
-3. TABLE RULE: for any coordinate/target/parameter query, respond with a GitHub-flavored markdown table: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference | Volume | Rate | Notes.
+2. NEVER attach a coordinate, region, volume, or rate to a PMID unless it is explicitly listed under that PMID below. Do NOT transfer a value from one paper to another. Do NOT fabricate numbers. If a line does not contain a value, it is "not stated".
+3. TABLE RULE: for any coordinate/target/parameter query, respond with a GitHub-flavored markdown table with EXACTLY these columns: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference | Volume | Rate | Source quote. The final "Source quote" column MUST contain the verbatim source_quote provided for that coordinate line (the sentence the values came from). If a line has no source_quote, put "—". Do NOT invent or paraphrase the quote; copy it exactly. Do NOT add a separate "Notes" column — the source quote replaces it.
 4. VALIDATED COORDINATES: Entries marked "✓ Validated stereotaxic coordinates" are pre-parsed, human-verified fields. Report their AP/ML/DV/reference/volume/rate EXACTLY as given — do NOT re-derive, round, or alter them, and do NOT write "not stated" when a value is present. Report a value as "not stated" ONLY when the line literally shows "not stated".
-5. REGION BINDING: A coordinate set belongs ONLY to the region named on its own line. If a paper lists multiple targets (e.g. simple lobule vs interposed nucleus), report them on SEPARATE rows. NEVER present one region's coordinates as another's. Lambda- and bregma-referenced values are NOT interchangeable — always report the Reference column.
-6. If NONE of the listed papers name the requested region, say so plainly and give general atlas guidance — do NOT substitute a different structure's coordinates or invent one. It is correct and expected to say "the indexed literature does not contain a coordinate for X."
-7. Every coordinate row must include its [PMID:XXXXXXX] link. Do not paste partial source-quote fragments as evidence — the validated fields + PMID link ARE the citation.
+5. REGION BINDING: A coordinate set belongs ONLY to the region named on its own line. If a paper lists multiple targets, report them on SEPARATE rows with their own source_quote. NEVER present one region's coordinates as another's. Lambda- and bregma-referenced values are NOT interchangeable — always report the Reference column.
+6. If NONE of the listed papers name the requested region (after applying the WORD-SENSE rule above), say so plainly and give general atlas guidance — do NOT substitute a different structure's coordinates or invent one. It is correct and expected to say "the indexed literature does not contain a coordinate for X."
+7. Every coordinate row must include its [PMID:XXXXXXX] link. The evidence for each row is its validated fields + the verbatim source quote in the Source quote column + the PMID link.
 8. Close literature-grounded answers with a one-line reminder that this is not a substitute for IACUC-approved protocols or veterinary/atlas verification.
 
 ${firmwareRules}
