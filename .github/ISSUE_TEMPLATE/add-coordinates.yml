@@ -12,6 +12,17 @@ body:
     validations:
       required: true
   - type: textarea
+    id: tsv
+    attributes:
+      label: TSV table (paste from Excel — optional)
+      description: >
+        For bulk coordinate tables: copy the rows directly from Excel (this gives
+        TAB-separated columns) and paste here. Must include a header row.
+        One PMID per table — enter it in the PMID field above.
+        Leave blank if you're using the free-text Methods field instead.
+      placeholder: "Injection Site\tAP (lambda)\tML\tDV\tangle\tVolume\tTracer used\n..."
+      render: text  
+  - type: textarea
     id: methods
     attributes:
       label: Methods / coordinate text
