@@ -1,0 +1,26 @@
+name: Add Injection Coordinates
+description: Submit a paper's methods text to extract stereotaxic coordinates via FlyerGPT.
+title: "[coords] PMID "
+labels: ["add-coords"]
+body:
+  - type: input
+    id: pmid
+    attributes:
+      label: PMID
+      description: PubMed ID (digits only)
+      placeholder: "40848722"
+    validations:
+      required: true
+  - type: textarea
+    id: methods
+    attributes:
+      label: Methods / coordinate text
+      description: Paste the stereotaxic surgery paragraph(s). Include the sentence(s) with AP/ML/DV, volume, and rate.
+      placeholder: "Mice were injected... AP -2.8, ML 1.4 relative to lambda... 200 nL at 40 nL/min..."
+    validations:
+      required: true
+  - type: input
+    id: species
+    attributes:
+      label: Species (optional)
+      placeholder: "mouse"
