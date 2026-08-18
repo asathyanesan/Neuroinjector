@@ -12,15 +12,25 @@ const TABS = [
   { id: 'literature', label: 'Surgical Literature', icon: BookOpen },
 ];
 
+// How many validated coordinate rows to show per paper before paginating.
+const TARGET_PAGE_SIZE = 10;
+
+// Detects a follow-up asking for the next page of coordinate rows.
+const MORE_REQUEST_RE =
+  /^\s*(y|yes|yep|yeah|sure|ok|okay|please)\s*[.!]?\s*$/i.source
+    ? /^\s*(y|yes|yep|yeah|sure|ok|okay|please)\s*[.!]?\s*$|\bshow\s+more\b|\bmore\s+(rows|targets|coordinates|results|papers|entries)\b|\b(show|list|see|give|display)\s+(me\s+)?(the\s+)?(rest|remaining|others|next|all)\b|\bnext\s+(10|ten|page)\b|\bthe\s+rest\b/i
+    : /$^/;
+
 const STOP_WORDS = new Set(['the', 'a', 'an', 'in', 'of', 'for', 'and', 'or', 'to', 'is', 'are',
   'was', 'were', 'with', 'that', 'this', 'it', 'be', 'as', 'at', 'by', 'from', 'on', 'not',
   'but', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
   'may', 'might', 'can', 'about', 'which', 'what', 'how', 'when', 'where', 'who', 'i', 'we',
   'my', 'our', 'you', 'your']);
 
+// FIX 1: keep 2-character tokens so region acronyms (FN, CP, IO, SC, DG) survive tokenization.
 function tokenize(text) {
   return (text || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+    .filter((w) => w.length >= 2 && !STOP_WORDS.has(w));
 }
 
 function scoreText(words, text) {
@@ -66,6 +76,11 @@ export default function App() {
   const [loadingStatus, setLoadingStatus] = useState('');
   const [atlasTarget, setAtlasTarget] = useState(null);
   const chatContainerRef = useRef(null);
+
+  // PAGINATION: how many coordinate rows per paper the last/next prompt may include.
+  const targetLimitRef = useRef(TARGET_PAGE_SIZE);
+  // Whether the previous prompt actually withheld rows (drives "show more" eligibility).
+  const truncationRef = useRef({ truncated: false, maxTotal: 0 });
 
   useEffect(() => {
     fetch('data/hardware-kb.json').then((r) => r.json()).then(setHardwareKb).catch(() => {});
@@ -185,18 +200,27 @@ export default function App() {
   function getRelevantRefs(query, topN = 10) {
     const words = tokenize(query);
     const lowerQuery = (query || '').toLowerCase();
+    // FIX 3 support: normalized single-token set for exact acronym comparison.
+    const qTokens = new Set(
+      lowerQuery.split(/\s+/).map((w) => w.replace(/[^a-z0-9]/g, '')).filter(Boolean)
+    );
     const pool = getMergedLiteraturePool().filter(isMousePaper);
     if (!pool.length) return [];
 
     const scored = pool.map((entry) => {
       const passageText = (entry.passages || []).map((p) => p.text).join(' ');
-      const text = `${entry.title || ''} ${entry.regionText} ${passageText.slice(0, 1500)} ${entry.methodsText.slice(0, 1000)}`;
+      // FIX 2: PMID is searchable, so "PMID 32639229" retrieves that paper directly.
+      const text = `${entry.pmid} ${entry.title || ''} ${entry.regionText} ${passageText.slice(0, 1500)} ${entry.methodsText.slice(0, 1000)}`;
       let score = scoreText(words, text);
 
-      // Strong boost for explicit region/acronym matches in the query.
+      // FIX 3: exact region-acronym match outranks generic substring hits (+30 vs +10),
+      // breaking the flat tie where every same-region paper scored identically.
       let regionMatched = false;
       entry.regions.forEach((r) => {
-        if (r && lowerQuery.includes(r.toLowerCase())) { score += 10; regionMatched = true; }
+        if (!r) return;
+        const rNorm = r.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (rNorm && qTokens.has(rNorm)) { score += 30; regionMatched = true; }
+        else if (lowerQuery.includes(r.toLowerCase())) { score += 10; regionMatched = true; }
       });
       // Also match query words against structured region text (ccf_region + verbatim).
       const regScore = scoreText(words, entry.regionText);
@@ -207,6 +231,10 @@ export default function App() {
       const structWithCoords = structTargets.filter(
         (t) => t.ap_mm != null || t.ml_mm != null || t.dv_mm != null);
       if (structWithCoords.length) score += 5;
+
+      // FIX 4: an explicit PMID in the query wins outright; curated coords break ties.
+      if (entry.pmid && lowerQuery.includes(String(entry.pmid))) score += 50;
+      if (structWithCoords.length && regionMatched) score += 3;
 
       const indexed = injectionIndex.get(String(entry.pmid));
 
@@ -229,9 +257,13 @@ export default function App() {
       .map((s) => s.entry);
   }
 
-  function buildSystemPrompt(query) {
+  // `limit` = max validated coordinate rows emitted per paper (pagination page size).
+  function buildSystemPrompt(query, limit = TARGET_PAGE_SIZE) {
     const hwHits = getRelevantHardware(query);
     const relevantRefs = getRelevantRefs(query, 10);
+
+    let anyTruncated = false;
+    let maxTotal = 0;
 
     const syringeTable = syringeDb
       ? syringeDb.syringes.map((s) =>
@@ -251,7 +283,13 @@ export default function App() {
 
         if (r.hasStructured) {
           // PRIMARY: emit the pre-parsed, validated coordinate fields + verbatim source quote.
-          const lines = r.structWithCoords.map((t) => {
+          const total = r.structWithCoords.length;
+          if (total > maxTotal) maxTotal = total;
+          const shown = r.structWithCoords.slice(0, limit);
+          const hidden = total - shown.length;
+          if (hidden > 0) anyTruncated = true;
+
+          const lines = shown.map((t) => {
             const region = t.ccf_region || t.region_verbatim || 'unspecified region';
             const ap = fmtCoord(t.ap_mm), ml = fmtCoord(t.ml_mm), dv = fmtCoord(t.dv_mm);
             const ref = t.reference || 'not stated';
@@ -261,7 +299,12 @@ export default function App() {
             const quoteLine = quote ? `\n       source_quote: "${quote}"` : '';
             return `     • ${region} — AP ${ap}, ML ${ml}, DV ${dv} mm (ref: ${ref}); volume ${vol}; rate ${rate}${quoteLine}`;
           }).join('\n');
-          return `${header}\n   ✓ Validated stereotaxic coordinates (OSC-distilled, 92% verified):\n${lines}\n   Verify full context: ${pmidLink}`;
+
+          const pageNote = hidden > 0
+            ? `\n   [PAGINATED] Showing rows 1–${shown.length} of ${total} for this PMID. ${hidden} row(s) withheld — the user must ask for more to see them.`
+            : (total > TARGET_PAGE_SIZE ? `\n   [PAGINATED] Showing all ${total} rows for this PMID.` : '');
+
+          return `${header}\n   ✓ Validated stereotaxic coordinates (OSC-distilled, 92% verified):\n${lines}${pageNote}\n   Verify full context: ${pmidLink}`;
         }
 
         // FALLBACK: region-bound passage text (LLM parses), for papers with no structured target.
@@ -273,6 +316,13 @@ export default function App() {
         return `${header} (regions: ${r.regions.join(', ') || 'unspecified'})\n   ${evidence}\n   Verify full context: ${pmidLink}`;
       }).join('\n\n')
       : '(no directly matching surgical literature indexed for this query — answer from general veterinary/stereotaxic knowledge and say so)';
+
+    // Record pagination state so the next turn knows whether "show more" is meaningful.
+    truncationRef.current = { truncated: anyTruncated, maxTotal };
+
+    const paginationBanner = anyTruncated
+      ? `\nPAGINATION STATE: coordinate rows are capped at ${limit} per paper for readability. At least one paper above has withheld rows (marked [PAGINATED]). You MUST follow Rule 11.`
+      : `\nPAGINATION STATE: all available coordinate rows for the papers above are shown (cap ${limit} per paper not exceeded). Do NOT offer to show more.`;
 
     const firmwareRules = `
 ## ARDUINO FIRMWARE BEHAVIOR & KINEMATICS (.ino Specification)
@@ -314,6 +364,10 @@ The validated coordinate lines below were distilled from each paper's Methods te
 8. If NONE of the listed papers name the requested region (after applying the WORD-SENSE rule above), say so plainly and give general atlas guidance — do NOT substitute a different structure's coordinates or invent one. It is correct and expected to say "the indexed literature does not contain a coordinate for X."
 9. Every coordinate row must include its [PMID:XXXXXXX] link. The evidence for each row is its validated fields + the verbatim source quote in the Source quote column + the PMID link.
 10. Close literature-grounded answers with a one-line reminder that this is not a substitute for IACUC-approved protocols or veterinary/atlas verification.
+11. PAGINATION — MANDATORY: Coordinate rows are capped at ${limit} per paper. Report ONLY the rows shown above; the withheld rows are NOT available to you and you must NEVER guess, summarise, or invent them. When any citation is marked [PAGINATED] with withheld rows, end your answer with a single line in exactly this form (one line per affected paper), then stop:
+    > Showing rows 1–N of M for [PMID:XXXXXXX]. Reply **"show more"** to see the next ${TARGET_PAGE_SIZE}.
+   If several papers are paginated, list one such line each. If nothing is marked as withholding rows, do NOT mention pagination and do NOT offer to show more.
+${paginationBanner}
 
 ${firmwareRules}
 
@@ -378,6 +432,21 @@ ${citationPool}`;
       (_, pmid) => `[[PMID:${pmid}]](https://pubmed.ncbi.nlm.nih.gov/${pmid}/)`);
   }
 
+  // Decide how many coordinate rows per paper this turn may show.
+  //   - a "show more" follow-up while rows are withheld  -> previous limit + 10
+  //   - anything else (a new question)                   -> reset to 10
+  function resolveTargetLimit(userMessage) {
+    const isMore = MORE_REQUEST_RE.test((userMessage || '').trim());
+    if (isMore && truncationRef.current.truncated) {
+      const next = targetLimitRef.current + TARGET_PAGE_SIZE;
+      targetLimitRef.current = next;
+      return next;
+    }
+    if (isMore) return targetLimitRef.current; // nothing withheld — keep current page size
+    targetLimitRef.current = TARGET_PAGE_SIZE; // new topic resets pagination
+    return TARGET_PAGE_SIZE;
+  }
+
   async function handleChat(userMessage) {
     if (!userMessage.trim()) return;
     setIsLoading(true);
@@ -393,8 +462,13 @@ ${citationPool}`;
         .map((m) => m.content).join(' ');
       const ragQuery = `${recentContext} ${userMessage}`.trim();
 
-      setLoadingStatus('Reading validated coordinates…');
-      const systemPrompt = buildSystemPrompt(ragQuery);
+      const limit = resolveTargetLimit(userMessage);
+      setLoadingStatus(
+        limit > TARGET_PAGE_SIZE
+          ? `Loading coordinate rows 1–${limit} per paper…`
+          : 'Reading validated coordinates…'
+      );
+      const systemPrompt = buildSystemPrompt(ragQuery, limit);
       const messagesWithSystem = [systemPrompt, ...updatedMessages];
 
       setLoadingStatus(`Composing answer with ${selectedModel}…`);
@@ -432,7 +506,11 @@ ${citationPool}`;
 
   function clearChat() {
     if (chatMessages.length === 0) return;
-    if (window.confirm('Clear the conversation? This cannot be undone.')) setChatMessages([]);
+    if (window.confirm('Clear the conversation? This cannot be undone.')) {
+      setChatMessages([]);
+      targetLimitRef.current = TARGET_PAGE_SIZE;
+      truncationRef.current = { truncated: false, maxTotal: 0 };
+    }
   }
 
   function askAboutAtlasTarget() {
