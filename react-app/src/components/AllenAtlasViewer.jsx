@@ -1,62 +1,53 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const CCF_VOXEL_SIZE_MM = 0.01;
 const BREGMA_DV_VOXEL = 44;
 const MIDLINE_ML_VOXEL = 570;
 
-// Manifest/structure JSON store root-absolute URLs (e.g. "/atlas/ccfv3/tpl_ap_100.png");
-// rewrite them relative to the app's base path so it works under a subpath deployment.
+// Full CCF coronal extent at 10 um, in viewBox units (1 unit == 1 voxel).
+const VOL_W = 1140; // ML
+const VOL_H = 800;  // DV
+
 function resolveAssetUrl(url) {
   if (!url) return url;
   return url.replace(/^\//, import.meta.env.BASE_URL);
 }
 
 // ─────────────────────────────────────────────────────────────
-// §4k  Centroid-based nearest-structure lookup.
-// Uses the SAME coordinate convention as handleSvgClick:
-//   ml_mm = (voxel_z - 570) * 0.01   (signed; + = right)
-//   dv_mm = (voxel_y - 44)  * 0.01   (POSITIVE-DOWN; + = ventral)
-// The ccfv3_structures.json centroids are already stored in this
-// convention (verified: voxel_z 569.5 → ml_mm -0.01, voxel_y 653.1
-// → dv_mm 6.09), so no sign flip is needed.
+// Region identification comes from the CCF annotation volume via
+// per-slice structure-ID maps (ids_ap_*.png, ID packed into RGB),
+// NOT from centroids.
+//
+// The old centroid approach was structurally unfixable:
+// ccfv3_structures.json stores one midline point per structure per
+// AP level -- ml_mm ~= -0.01 for all 687 entries, with no extent or
+// bbox. So a point->structure query had no lateral information at
+// all, and DV centroids are averaged over the whole coronal slice.
+// Concrete failure: SSp-un's centroid sits at DV ~1.7 because
+// lateral cortex curves ventrally, so it beat CA1 for a click at
+// (ML 1.52, DV 1.70) that is plainly hippocampus.
+//
+// Verified against annotation_25.nrrd: that same coordinate now
+// resolves to DG-mo (dentate gyrus, molecular layer). id 0 is
+// background, so the ID map also serves as the tissue mask.
 // ─────────────────────────────────────────────────────────────
-function findNearestStructure(ap_mm, ml_mm, dv_mm, structs) {
-  if (!structs || structs.length === 0) return null;
-  const AP_WINDOW = 1.5; // mm — only consider structures near this coronal plane
-
-  let best = null;
-  let bestDist = Infinity;
-
-  for (const s of structs) {
-    if (s.ap_mm == null || s.ml_mm == null || s.dv_mm == null) continue;
-    if (Math.abs(s.ap_mm - ap_mm) > AP_WINDOW) continue;
-
-    const d = Math.hypot(s.ml_mm - ml_mm, s.dv_mm - dv_mm);
-    if (d < bestDist) {
-      bestDist = d;
-      best = s;
-    }
-  }
-
-  return best
-    ? { acronym: best.acronym, name: best.name, dist: bestDist }
-    : null;
-}
 
 export default function AllenAtlasViewer({ onTargetSelect }) {
   const [slices, setSlices] = useState([]);
   const [structures, setStructures] = useState([]);
+  const [idToAcronym, setIdToAcronym] = useState(null);
   const [sliceIndex, setSliceIndex] = useState(0);
   const [selectedSearch, setSelectedSearch] = useState('');
   const [selectedRegionInfo, setSelectedRegionInfo] = useState(null);
   const [showBoundaries, setShowBoundaries] = useState(true);
-  const [showGrid, setShowGrid] = useState(false); // §4j
+  const [showGrid, setShowGrid] = useState(false);
   const [clickedTarget, setClickedTarget] = useState(null);
   const [zoom, setZoom] = useState(1);
   const svgRef = useRef(null);
 
-  // §4i — local draft strings so the user can type "-2." without the
-  // controlled value reverting mid-keystroke. Committed on blur / Enter.
+  // Offscreen canvas holding the current slice's structure-ID map.
+  const idMapRef = useRef({ ctx: null, w: 0, h: 0, ready: false });
+
   const [draftAp, setDraftAp] = useState('');
   const [draftMl, setDraftMl] = useState('');
   const [draftDv, setDraftDv] = useState('');
@@ -71,60 +62,114 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
       .then((res) => res.json())
       .then((data) => setStructures(data))
       .catch((err) => console.error('Error loading structures:', err));
+
+    fetch(`${import.meta.env.BASE_URL}atlas/id_to_acronym.json`)
+      .then((res) => res.json())
+      .then((data) => setIdToAcronym(data))
+      .catch(() => console.warn('id_to_acronym.json not found — region names unavailable'));
   }, []);
 
   const activeSlice = slices[sliceIndex] || { ap_mm: 0, template_url: '', boundary_url: '' };
 
-  // §4i — keep draft inputs in sync whenever the target changes
-  // (via click, search, or a committed manual edit).
+  // ── Rasterise the per-slice structure-ID map offscreen ──
+  // URL derived from the template: tpl_ap_100.png -> ids_ap_100.png
+  useEffect(() => {
+    if (!activeSlice.template_url) { idMapRef.current.ready = false; return; }
+    const idUrl = resolveAssetUrl(activeSlice.template_url).replace('tpl_ap_', 'ids_ap_');
+    let cancelled = false;
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      if (cancelled) return;
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      idMapRef.current = { ctx, w: c.width, h: c.height, ready: true };
+    };
+    img.onerror = () => {
+      idMapRef.current.ready = false;
+      console.warn('Structure-ID map missing for this slice:', idUrl);
+    };
+    img.src = idUrl;
+    return () => { cancelled = true; };
+  }, [activeSlice.template_url]);
+
+  // voxel (z, y) -> exact CCF structure.
+  //   null            = background (outside brain)
+  //   {unavailable}   = ID map not loaded for this slice
+  const lookupStructure = useCallback((voxelZ, voxelY) => {
+    const m = idMapRef.current;
+    if (!m.ready || !m.ctx) return { unavailable: true };
+    const px = Math.round((voxelZ / VOL_W) * m.w);
+    const py = Math.round((voxelY / VOL_H) * m.h);
+    if (px < 0 || py < 0 || px >= m.w || py >= m.h) return null;
+    let d;
+    try {
+      d = m.ctx.getImageData(px, py, 1, 1).data;
+    } catch {
+      return { unavailable: true };
+    }
+    const id = (d[0] << 16) | (d[1] << 8) | d[2];
+    if (id === 0) return null; // background
+    const e = idToAcronym ? idToAcronym[String(id)] : null;
+    return { id, acronym: e ? e.acronym : `id:${id}`, name: e ? e.name : '' };
+  }, [idToAcronym]);
+
   useEffect(() => {
     if (clickedTarget) {
       setDraftAp(clickedTarget.ap != null ? String(clickedTarget.ap) : '');
       setDraftMl(clickedTarget.ml != null ? String(clickedTarget.ml) : '');
       setDraftDv(clickedTarget.dv != null ? String(clickedTarget.dv) : '');
     } else {
-      setDraftAp('');
-      setDraftMl('');
-      setDraftDv('');
+      setDraftAp(''); setDraftMl(''); setDraftDv('');
     }
   }, [clickedTarget]);
+
+  // ── Zoom as a viewBox window, NOT a CSS transform ──
+  // A CSS scale() desyncs screen px from viewBox units and breaks
+  // getScreenCTM-based click mapping. Shrinking the viewBox keeps
+  // 1 viewBox unit == 1 voxel at every zoom level.
+  const viewW = VOL_W / zoom;
+  const viewH = VOL_H / zoom;
+  const rawCx = clickedTarget && clickedTarget.voxelZ != null ? clickedTarget.voxelZ : VOL_W / 2;
+  const rawCy = clickedTarget && clickedTarget.voxelY != null ? clickedTarget.voxelY : VOL_H / 2;
+  const cx = Math.min(Math.max(rawCx, viewW / 2), VOL_W - viewW / 2);
+  const cy = Math.min(Math.max(rawCy, viewH / 2), VOL_H - viewH / 2);
+  const viewBox = `${cx - viewW / 2} ${cy - viewH / 2} ${viewW} ${viewH}`;
 
   const handleRegionSelect = (e) => {
     const val = e.target.value;
     setSelectedSearch(val);
 
     const match = structures.find(
-      (s) => `${s.acronym} - ${s.name}`.toLowerCase() === val.toLowerCase() || s.acronym.toLowerCase() === val.toLowerCase()
+      (s) => `${s.acronym} - ${s.name}`.toLowerCase() === val.toLowerCase()
+          || s.acronym.toLowerCase() === val.toLowerCase()
     );
 
     if (match && slices.length > 0) {
       setSelectedRegionInfo(match);
 
-      let closestIdx = 0;
-      let minDiff = Infinity;
+      let closestIdx = 0, minDiff = Infinity;
       slices.forEach((s, idx) => {
         const diff = Math.abs(s.voxel_x - match.voxel_x);
-        if (diff < minDiff) {
-          minDiff = diff;
-          closestIdx = idx;
-        }
+        if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
       });
-
       setSliceIndex(closestIdx);
 
-      const xRatio = match.voxel_z / 1140;
-      const yRatio = match.voxel_y / 800;
-
       const targetData = {
-        xRatio,
-        yRatio,
+        xRatio: match.voxel_z / VOL_W,
+        yRatio: match.voxel_y / VOL_H,
         voxelZ: match.voxel_z,
         voxelY: match.voxel_y,
         ap: match.ap_mm,
         ml: match.ml_mm,
         dv: match.dv_mm,
         region: match.acronym,
-        name: match.name
+        name: match.name,
+        structureId: match.id ?? null,
+        outsideTissue: false
       };
 
       setClickedTarget(targetData);
@@ -132,35 +177,50 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
     }
   };
 
+  // ── Screen px -> viewBox units via getScreenCTM().inverse() ──
+  // The old getBoundingClientRect() ratio math divided by the FULL
+  // scaled SVG height while the container clipped with overflow:auto,
+  // so yRatio came out far too small -> DV far too dorsal.
   const handleSvgClick = (e) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const xRatio = (e.clientX - rect.left) / rect.width;
-    const yRatio = (e.clientY - rect.top) / rect.height;
+    const svg = svgRef.current;
+    if (!svg || typeof svg.getScreenCTM !== 'function') return;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
 
-    const voxelZ = Math.round(xRatio * 1140);
-    const voxelY = Math.round(yRatio * 800);
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const loc = pt.matrixTransform(ctm.inverse());
+
+    if (loc.x < 0 || loc.x > VOL_W || loc.y < 0 || loc.y > VOL_H) return;
+
+    const voxelZ = loc.x;
+    const voxelY = loc.y;
 
     const ml_mm = parseFloat(((voxelZ - MIDLINE_ML_VOXEL) * CCF_VOXEL_SIZE_MM).toFixed(2));
     const dv_mm = parseFloat(((voxelY - BREGMA_DV_VOXEL) * CCF_VOXEL_SIZE_MM).toFixed(2));
 
-    // §4k — identify the nearest CCF structure instead of "Custom Click"
-    const nearest = findNearestStructure(activeSlice.ap_mm, ml_mm, dv_mm, structures);
+    const hit = lookupStructure(voxelZ, voxelY);
+    const outside = hit === null;
+    const unavailable = !!(hit && hit.unavailable);
 
     const targetData = {
-      xRatio,
-      yRatio,
+      xRatio: voxelZ / VOL_W,
+      yRatio: voxelY / VOL_H,
       voxelZ,
       voxelY,
       ap: activeSlice.ap_mm,
       ml: ml_mm,
       dv: dv_mm,
-      region: nearest ? nearest.acronym : 'Custom Click',
-      name: nearest ? nearest.name : ''
+      region: outside ? 'Outside brain'
+            : unavailable ? 'ID map unavailable'
+            : hit.acronym,
+      name: (!outside && !unavailable) ? hit.name : '',
+      structureId: (!outside && !unavailable) ? hit.id : null,
+      outsideTissue: outside,
+      idMapUnavailable: unavailable
     };
 
-    // A manual click no longer corresponds to the previously searched structure,
-    // so clear it rather than leave a mismatched reference card on screen.
     setSelectedRegionInfo(null);
     setSelectedSearch('');
     setClickedTarget(targetData);
@@ -170,49 +230,42 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
   const handleApInput = (e) => {
     const val = parseFloat(e.target.value);
     if (Number.isNaN(val) || slices.length === 0) return;
-
-    let closestIdx = 0;
-    let minDiff = Infinity;
+    let closestIdx = 0, minDiff = Infinity;
     slices.forEach((s, idx) => {
       const diff = Math.abs(s.ap_mm - val);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestIdx = idx;
-      }
+      if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
     });
     setSliceIndex(closestIdx);
   };
 
-  // §4i — recompute the whole target (crosshair + region) from a
-  // partial coordinate change, then broadcast it to the parent.
   const applyManualCoord = (partial) => {
     const base = clickedTarget || {
-      ap: activeSlice.ap_mm,
-      ml: 0,
-      dv: 0,
-      voxelZ: MIDLINE_ML_VOXEL,
-      voxelY: BREGMA_DV_VOXEL,
-      xRatio: MIDLINE_ML_VOXEL / 1140,
-      yRatio: BREGMA_DV_VOXEL / 800
+      ap: activeSlice.ap_mm, ml: 0, dv: 0,
+      voxelZ: MIDLINE_ML_VOXEL, voxelY: BREGMA_DV_VOXEL,
+      xRatio: MIDLINE_ML_VOXEL / VOL_W, yRatio: BREGMA_DV_VOXEL / VOL_H
     };
-
     const next = { ...base, ...partial };
 
-    // Round for clean display
     next.ap = parseFloat(Number(next.ap).toFixed(2));
     next.ml = parseFloat(Number(next.ml).toFixed(2));
     next.dv = parseFloat(Number(next.dv).toFixed(2));
 
-    // Recompute crosshair position from ML / DV (positive-down convention)
     next.voxelZ = next.ml / CCF_VOXEL_SIZE_MM + MIDLINE_ML_VOXEL;
     next.voxelY = next.dv / CCF_VOXEL_SIZE_MM + BREGMA_DV_VOXEL;
-    next.xRatio = next.voxelZ / 1140;
-    next.yRatio = next.voxelY / 800;
+    next.xRatio = next.voxelZ / VOL_W;
+    next.yRatio = next.voxelY / VOL_H;
 
-    // Re-identify region from the typed coordinates (§4k)
-    const nearest = findNearestStructure(next.ap, next.ml, next.dv, structures);
-    next.region = nearest ? nearest.acronym : 'Custom Click';
-    next.name = nearest ? nearest.name : '';
+    const hit = lookupStructure(next.voxelZ, next.voxelY);
+    const outside = hit === null;
+    const unavailable = !!(hit && hit.unavailable);
+
+    next.region = outside ? 'Outside brain'
+                : unavailable ? 'ID map unavailable'
+                : hit.acronym;
+    next.name = (!outside && !unavailable) ? hit.name : '';
+    next.structureId = (!outside && !unavailable) ? hit.id : null;
+    next.outsideTissue = outside;
+    next.idMapUnavailable = unavailable;
 
     setSelectedRegionInfo(null);
     setSelectedSearch('');
@@ -223,15 +276,10 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
   const commitAp = () => {
     const v = parseFloat(draftAp);
     if (Number.isNaN(v) || slices.length === 0) return;
-    // Snap to nearest slice and use that slice's true AP
-    let closestIdx = 0;
-    let minDiff = Infinity;
+    let closestIdx = 0, minDiff = Infinity;
     slices.forEach((s, idx) => {
       const diff = Math.abs(s.ap_mm - v);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestIdx = idx;
-      }
+      if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
     });
     setSliceIndex(closestIdx);
     const snappedAp = slices[closestIdx] ? slices[closestIdx].ap_mm : v;
@@ -249,17 +297,15 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
   };
 
   const onKeyCommit = (fn) => (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      fn();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); fn(); }
   };
 
-  const zoomIn = () => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)));
-  const zoomOut = () => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)));
+  const zoomIn = () => setZoom((z) => Math.min(4, +(z + 0.5).toFixed(2)));
+  const zoomOut = () => setZoom((z) => Math.max(1, +(z - 0.5).toFixed(2)));
   const zoomReset = () => setZoom(1);
 
   const fmt = (n) => (n > 0 ? `+${n}` : `${n}`);
+  const sw = (n) => n / zoom; // keep stroke weight constant on screen
 
   return (
     <div style={styles.sidebarContainer}>
@@ -288,121 +334,105 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
         <button type="button" onClick={zoomReset} style={styles.zoomBtn}>Reset</button>
       </div>
 
-      {/* §4j — layer toggles */}
       <div style={styles.toggleRow}>
         <label style={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={showBoundaries}
-            onChange={(e) => setShowBoundaries(e.target.checked)}
-          />
+          <input type="checkbox" checked={showBoundaries}
+                 onChange={(e) => setShowBoundaries(e.target.checked)} />
           Boundaries
         </label>
         <label style={styles.toggle}>
-          <input
-            type="checkbox"
-            checked={showGrid}
-            onChange={(e) => setShowGrid(e.target.checked)}
-          />
-          1&nbsp;mm grid
+          <input type="checkbox" checked={showGrid}
+                 onChange={(e) => setShowGrid(e.target.checked)} />
+          1 mm grid
         </label>
       </div>
 
       <div style={styles.canvasContainer}>
-        <div style={styles.svgWrapper} onClick={handleSvgClick}>
-          <svg ref={svgRef} viewBox="0 0 1140 800" style={{ ...styles.svg, transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
-            {activeSlice.template_url && (
-              <image href={resolveAssetUrl(activeSlice.template_url)} x="0" y="0" width="1140" height="800" preserveAspectRatio="none" />
-            )}
-            {showBoundaries && activeSlice.boundary_url && (
-              <image href={resolveAssetUrl(activeSlice.boundary_url)} x="0" y="0" width="1140" height="800" preserveAspectRatio="none" style={{ opacity: 0.45, mixBlendMode: 'screen' }} />
-            )}
+        <svg
+          ref={svgRef}
+          viewBox={viewBox}
+          preserveAspectRatio="xMidYMid meet"
+          style={styles.svg}
+          onClick={handleSvgClick}
+        >
+          {activeSlice.template_url && (
+            <image href={resolveAssetUrl(activeSlice.template_url)}
+                   x="0" y="0" width={VOL_W} height={VOL_H}
+                   preserveAspectRatio="none" />
+          )}
+          {showBoundaries && activeSlice.boundary_url && (
+            <image href={resolveAssetUrl(activeSlice.boundary_url)}
+                   x="0" y="0" width={VOL_W} height={VOL_H}
+                   preserveAspectRatio="none"
+                   style={{ opacity: 0.45, mixBlendMode: 'screen' }} />
+          )}
 
-            {/* §4j — 1 mm Paxinos-style gridlines (1 mm = 100 SVG units) */}
-            {showGrid && (
-              <g pointerEvents="none">
-                {/* Vertical ML lines, ±6 mm around midline voxel 570 */}
-                {Array.from({ length: 13 }, (_, i) => i - 6).map((n) =>
-                  n !== 0 ? (
-                    <line
-                      key={`ml${n}`}
-                      x1={570 + n * 100} y1={0}
-                      x2={570 + n * 100} y2={800}
-                      stroke="#334155" strokeWidth="1" strokeDasharray="3 5"
-                    />
-                  ) : null
-                )}
-                {/* Horizontal DV lines, 1–8 mm below bregma-surface voxel 44 */}
-                {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-                  <line
-                    key={`dv${n}`}
-                    x1={0} y1={44 + n * 100}
-                    x2={1140} y2={44 + n * 100}
-                    stroke="#334155" strokeWidth="1" strokeDasharray="3 5"
-                  />
-                ))}
-                {/* ML labels along the top edge */}
-                {Array.from({ length: 13 }, (_, i) => i - 6).map((n) =>
-                  n !== 0 ? (
-                    <text
-                      key={`mll${n}`}
-                      x={570 + n * 100} y={14}
-                      fill="#64748b" fontSize="13" textAnchor="middle"
-                    >
-                      {n > 0 ? `+${n}` : n}
-                    </text>
-                  ) : null
-                )}
-                {/* DV labels along the left edge */}
-                {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-                  <text
-                    key={`dvl${n}`}
-                    x={5} y={44 + n * 100 - 5}
-                    fill="#64748b" fontSize="13"
-                  >
-                    -{n}
+          {showGrid && (
+            <g pointerEvents="none">
+              {Array.from({ length: 13 }, (_, i) => i - 6).map((n) =>
+                n !== 0 ? (
+                  <line key={`ml${n}`}
+                        x1={570 + n * 100} y1={0}
+                        x2={570 + n * 100} y2={VOL_H}
+                        stroke="#334155" strokeWidth={sw(1)} strokeDasharray="3 5" />
+                ) : null
+              )}
+              {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
+                <line key={`dv${n}`}
+                      x1={0} y1={44 + n * 100}
+                      x2={VOL_W} y2={44 + n * 100}
+                      stroke="#334155" strokeWidth={sw(1)} strokeDasharray="3 5" />
+              ))}
+              {Array.from({ length: 13 }, (_, i) => i - 6).map((n) =>
+                n !== 0 ? (
+                  <text key={`mll${n}`} x={570 + n * 100} y={cy - viewH / 2 + 14 / zoom}
+                        fill="#64748b" fontSize={13 / zoom} textAnchor="middle">
+                    {n > 0 ? `+${n}` : n}
                   </text>
-                ))}
-              </g>
-            )}
+                ) : null
+              )}
+              {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
+                <text key={`dvl${n}`} x={cx - viewW / 2 + 5 / zoom} y={44 + n * 100 - 5 / zoom}
+                      fill="#64748b" fontSize={13 / zoom}>
+                  {n}
+                </text>
+              ))}
+            </g>
+          )}
 
-            <line x1="570" y1="0" x2="570" y2="800" stroke="#ef4444" strokeDasharray="6 6" strokeWidth="2" />
-            <line x1="0" y1="44" x2="1140" y2="44" stroke="#3b82f6" strokeDasharray="4 4" strokeWidth="2" />
+          <line x1="570" y1="0" x2="570" y2={VOL_H}
+                stroke="#ef4444" strokeDasharray="6 6" strokeWidth={sw(2)} pointerEvents="none" />
+          <line x1="0" y1="44" x2={VOL_W} y2="44"
+                stroke="#3b82f6" strokeDasharray="4 4" strokeWidth={sw(2)} pointerEvents="none" />
 
-            {clickedTarget && (
-              <g transform={`translate(${clickedTarget.xRatio * 1140}, ${clickedTarget.yRatio * 800})`}>
-                <circle r="16" fill="none" stroke="#f59e0b" strokeWidth="3" />
-                <line x1="-22" y1="0" x2="22" y2="0" stroke="#f59e0b" strokeWidth="2" />
-                <line x1="0" y1="-22" x2="0" y2="22" stroke="#f59e0b" strokeWidth="2" />
-                <circle r="5" fill="#ef4444" />
-              </g>
-            )}
-          </svg>
-        </div>
+          {clickedTarget && clickedTarget.voxelZ != null && (
+            <g transform={`translate(${clickedTarget.voxelZ}, ${clickedTarget.voxelY})`}
+               pointerEvents="none">
+              <circle r={16 / zoom} fill="none"
+                      stroke={clickedTarget.outsideTissue ? '#64748b' : '#f59e0b'}
+                      strokeWidth={sw(3)} />
+              <line x1={-22 / zoom} y1="0" x2={22 / zoom} y2="0"
+                    stroke={clickedTarget.outsideTissue ? '#64748b' : '#f59e0b'} strokeWidth={sw(2)} />
+              <line x1="0" y1={-22 / zoom} x2="0" y2={22 / zoom}
+                    stroke={clickedTarget.outsideTissue ? '#64748b' : '#f59e0b'} strokeWidth={sw(2)} />
+              <circle r={5 / zoom} fill="#ef4444" />
+            </g>
+          )}
+        </svg>
       </div>
 
       <div style={styles.sliderSection}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
           <span>AP Position:</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="number"
-              step="0.05"
-              value={activeSlice.ap_mm}
-              onChange={handleApInput}
-              style={styles.apInput}
-            />
+            <input type="number" step="0.05" value={activeSlice.ap_mm}
+                   onChange={handleApInput} style={styles.apInput} />
             <span>mm</span>
           </div>
         </div>
-        <input
-          type="range"
-          min={0}
-          max={slices.length > 0 ? slices.length - 1 : 0}
-          value={sliceIndex}
-          onChange={(e) => setSliceIndex(Number(e.target.value))}
-          style={{ width: '100%', marginTop: '6px' }}
-        />
+        <input type="range" min={0} max={slices.length > 0 ? slices.length - 1 : 0}
+               value={sliceIndex} onChange={(e) => setSliceIndex(Number(e.target.value))}
+               style={{ width: '100%', marginTop: '6px' }} />
       </div>
 
       {selectedRegionInfo && (
@@ -424,53 +454,39 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
       <div style={styles.targetCard}>
         <h5 style={{ margin: '0 0 6px 0', color: '#f59e0b' }}>Active Target Coordinates</h5>
 
-        {/* §4k — identified structure badge */}
-        {clickedTarget && clickedTarget.region && clickedTarget.region !== 'Custom Click' && (
+        {clickedTarget && clickedTarget.outsideTissue && (
+          <div style={styles.warnBadge}>⚠ Outside brain tissue — no structure assigned</div>
+        )}
+        {clickedTarget && clickedTarget.idMapUnavailable && (
+          <div style={styles.warnBadge}>Structure-ID map not loaded for this slice</div>
+        )}
+        {clickedTarget && !clickedTarget.outsideTissue && !clickedTarget.idMapUnavailable && (
           <div style={styles.regionBadge}>
             CCF: {clickedTarget.region}
             {clickedTarget.name ? <span style={styles.regionBadgeSub}> — {clickedTarget.name}</span> : null}
           </div>
         )}
 
-        {/* §4i — manual coordinate entry (AP / ML / DV all typable) */}
         <div style={styles.manualEntry}>
           <span style={styles.coordLabel}>AP</span>
-          <input
-            type="number"
-            step="0.05"
-            value={draftAp}
-            placeholder="—"
-            onChange={(e) => setDraftAp(e.target.value)}
-            onBlur={commitAp}
-            onKeyDown={onKeyCommit(commitAp)}
-            style={styles.manualInput}
-          />
+          <input type="number" step="0.05" value={draftAp} placeholder="—"
+                 onChange={(e) => setDraftAp(e.target.value)}
+                 onBlur={commitAp} onKeyDown={onKeyCommit(commitAp)}
+                 style={styles.manualInput} />
           <span style={styles.coordUnit}>mm</span>
 
           <span style={styles.coordLabel}>ML</span>
-          <input
-            type="number"
-            step="0.05"
-            value={draftMl}
-            placeholder="—"
-            onChange={(e) => setDraftMl(e.target.value)}
-            onBlur={commitMl}
-            onKeyDown={onKeyCommit(commitMl)}
-            style={styles.manualInput}
-          />
+          <input type="number" step="0.05" value={draftMl} placeholder="—"
+                 onChange={(e) => setDraftMl(e.target.value)}
+                 onBlur={commitMl} onKeyDown={onKeyCommit(commitMl)}
+                 style={styles.manualInput} />
           <span style={styles.coordUnit}>mm</span>
 
           <span style={styles.coordLabel}>DV</span>
-          <input
-            type="number"
-            step="0.05"
-            value={draftDv}
-            placeholder="—"
-            onChange={(e) => setDraftDv(e.target.value)}
-            onBlur={commitDv}
-            onKeyDown={onKeyCommit(commitDv)}
-            style={styles.manualInput}
-          />
+          <input type="number" step="0.05" value={draftDv} placeholder="—"
+                 onChange={(e) => setDraftDv(e.target.value)}
+                 onBlur={commitDv} onKeyDown={onKeyCommit(commitDv)}
+                 style={styles.manualInput} />
           <span style={styles.coordUnit}>mm</span>
         </div>
 
@@ -479,6 +495,11 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
             Type coordinates above, or click/search a slice. DV is positive-down (ventral).
           </p>
         )}
+
+        <p style={styles.caveat}>
+          Region resolved from the Allen CCFv3 annotation volume (25 µm voxel lookup).
+          Always verify against a printed atlas before surgery.
+        </p>
       </div>
     </div>
   );
@@ -489,9 +510,8 @@ const styles = {
   heading: { margin: '0 0 4px 0', fontSize: '1.05rem' },
   searchSection: { width: '100%' },
   searchInput: { width: '100%', padding: '8px 10px', borderRadius: 6, border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' },
-  canvasContainer: { backgroundColor: '#000', borderRadius: 6, overflow: 'auto', border: '1px solid #334155', maxHeight: '65vh' },
-  svgWrapper: { width: '100%', cursor: 'crosshair' },
-  svg: { width: '100%', height: 'auto', display: 'block' },
+  canvasContainer: { backgroundColor: '#000', borderRadius: 6, overflow: 'hidden', border: '1px solid #334155', height: '52vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  svg: { width: '100%', height: '100%', display: 'block', cursor: 'crosshair' },
   zoomControls: { display: 'flex', alignItems: 'center', gap: 8 },
   zoomBtn: { backgroundColor: '#1e293b', border: '1px solid #475569', color: '#f8fafc', borderRadius: 6, padding: '4px 10px', fontSize: '0.85rem', cursor: 'pointer' },
   zoomLabel: { fontSize: '0.8rem', minWidth: 40, textAlign: 'center', color: '#94a3b8' },
@@ -504,8 +524,10 @@ const styles = {
   coordGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, fontSize: '0.82rem' },
   regionBadge: { fontSize: '0.82rem', color: '#38bdf8', fontWeight: 600, marginBottom: 8 },
   regionBadgeSub: { color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 },
+  warnBadge: { fontSize: '0.8rem', color: '#fbbf24', backgroundColor: '#78350f30', border: '1px solid #b45309', borderRadius: 4, padding: '4px 8px', marginBottom: 8 },
   manualEntry: { display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '6px 8px', alignItems: 'center' },
   manualInput: { width: '100%', padding: '4px 6px', borderRadius: 4, border: '1px solid #475569', backgroundColor: '#1e293b', color: '#fff', fontSize: '0.82rem', boxSizing: 'border-box' },
   coordLabel: { color: '#f59e0b', fontWeight: 600, fontSize: '0.82rem' },
-  coordUnit: { color: '#64748b', fontSize: '0.75rem' }
+  coordUnit: { color: '#64748b', fontSize: '0.75rem' },
+  caveat: { color: '#64748b', fontSize: '0.72rem', margin: '10px 0 0 0', lineHeight: 1.4 }
 };

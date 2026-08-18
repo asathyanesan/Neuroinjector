@@ -42,3 +42,5 @@ repo_inventory.py
 assistant/atlas/annotation_25.nrrd
 assistant/atlas/ccf_ontology.json
 assistant/atlas/structure_graph.json
+
+react-app/public/atlas/annotation_25.nrrd
