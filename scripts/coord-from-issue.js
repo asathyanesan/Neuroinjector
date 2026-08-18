@@ -17,16 +17,19 @@ const pmid    = (field('PMID').match(/\d{5,9}/) || [''])[0];
 const methods = field('Methods / coordinate text');
 const species = field('Species \\(optional\\)') || null;
 
-const SYSTEM = `You extract stereotaxic injection parameters from neuroscience methods text. Return ONLY valid JSON, no prose. Schema:
+const SYSTEM = `You extract stereotaxic injection parameters from neuroscience methods text. Return ONLY valid JSON, no prose, no markdown. Schema:
 {"targets":[{"region_verbatim":"","ccf_region":"","ap_mm":null,"ml_mm":null,"dv_mm":null,"reference":"","volume_nl":null,"rate_nl_min":null,"source_quote":""}]}
 RULES:
-- "midline" ml_mm=0. "caudal/posterior to bregma"=negative ap_mm. "anterior/rostral"=positive.
-- dv_mm is depth; um->mm (500um=0.5). Ranges as "0.1 to 0.5".
-- VOLUME/RATE in nL: ul->nl x1000, ml->nl x1e6. Never <1 nL for a real injection.
-- Coordinates AS-IS in mm; never convert AP/ML/DV.
-- MULTI-SITE: separate target per distinct site. BILATERAL: two targets, ml +X and -X.
-- WORD-SENSE: "simplex" in "herpes simplex virus" is the VIRUS not the lobule; skip landmark-only mentions.
-- Every number must appear verbatim in source_quote. Absent=null. Never guess.`;
+- A paper OFTEN states AP, ML, DV in SEPARATE sentences or in reversed order. Scan ALL text and assemble the COMPLETE AP+ML+DV set per target. Do NOT stop after one axis, and do NOT leave an axis null if its value appears anywhere in the text.
+- COORDINATES MAY BE WRITTEN VALUE-FIRST: "2.8 mm posterior", "1.4 mm lateral", "2.0 mm ventral", "0.35 mm below the surface" all give coordinates. Map them: posterior/caudal => negative ap_mm; anterior/rostral => positive ap_mm; lateral => ml_mm (magnitude, or the stated sign); ventral/deep/below-surface => dv_mm. "2.8 mm posterior ... 1.4 mm lateral to lambda" => ap_mm -2.8, ml_mm 1.4, reference "lambda".
+- Also handle axis-first forms ("AP: -2.8", "ML 1.4", "DV -2.0") and coordinate triples in any order.
+- "midline" => ml_mm 0. "X mm below pial/dura/skull/surface" => dv_mm, set reference accordingly; otherwise reference is "bregma" or "lambda" as stated in the text.
+- dv_mm is injection DEPTH; depths in micrometers (um/µm) convert to mm (500 um => 0.5). If multiple depths at one site (e.g. 500, 380, 250, 100 um) report a range string "0.1 to 0.5".
+- VOLUME & RATE in nanoliters: microliter (ul/µl) => x1000 (1 ul = 1000 nl); milliliter => x1e6; nanoliter as-is. A real injection is never < 1 nL — if your value is < 1 you failed to convert a ul value.
+- NEVER convert AP/ML/DV coordinates; they are mm as-is. ML means mediolateral, not milliliters.
+- MULTI-SITE: distinct sites => separate target objects. BILATERAL ("bilateral", "both hemispheres", "±X"): emit TWO targets, ml_mm +X and -X, sharing AP/DV/reference.
+- ccf_region: best Allen CCF name. "simple lobule"/"lobule simplex" => SIM. "simplex" in "herpes simplex virus"/"HSV" is the VIRUS, not a region — do not tag it. A structure named only as a landmark is not an injection target.
+- source_quote: the sentence(s) the values came from, verbatim. Every reported number must appear in the text. Absent => null. Never guess.`;
 
 function callLLM(text) {
   return new Promise((res) => {
