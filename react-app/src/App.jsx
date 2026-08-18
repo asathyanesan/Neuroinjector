@@ -17,9 +17,89 @@ const TARGET_PAGE_SIZE = 10;
 
 // Detects a follow-up asking for the next page of coordinate rows.
 const MORE_REQUEST_RE =
-  /^\s*(y|yes|yep|yeah|sure|ok|okay|please)\s*[.!]?\s*$/i.source
-    ? /^\s*(y|yes|yep|yeah|sure|ok|okay|please)\s*[.!]?\s*$|\bshow\s+more\b|\bmore\s+(rows|targets|coordinates|results|papers|entries)\b|\b(show|list|see|give|display)\s+(me\s+)?(the\s+)?(rest|remaining|others|next|all)\b|\bnext\s+(10|ten|page)\b|\bthe\s+rest\b/i
-    : /$^/;
+  /^\s*(y|yes|yep|yeah|sure|ok|okay|please)\s*[.!]?\s*$|\bshow\s+more\b|\bmore\s+(rows|targets|coordinates|results|papers|entries)\b|\b(show|list|see|give|display)\s+(me\s+)?(the\s+)?(rest|remaining|others|next|all)\b|\bnext\s+(10|ten|page)\b|\bthe\s+rest\b/i;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CCF acronym <-> plain-language aliases.
+// Fixes the case where the data stores "FN" but the user types "fastigial
+// nucleus" (or vice versa) and nothing matches: neither the token "fn" nor the
+// substring "fn" appears in "fastigial nucleus", so the paper scored 0.
+// ─────────────────────────────────────────────────────────────────────────────
+const REGION_ALIASES = {
+  FN:    ['fastigial nucleus', 'fastigial', 'medial cerebellar nucleus'],
+  IP:    ['interposed nucleus', 'interpositus', 'nucleus interpositus', 'anterior interposed'],
+  DN:    ['dentate nucleus', 'lateral cerebellar nucleus'],
+  SIM:   ['simplex lobule', 'simple lobule', 'lobulus simplex', 'lobule simplex'],
+  CRUS1: ['crus 1', 'crus i'],
+  CRUS2: ['crus 2', 'crus ii'],
+  IO:    ['inferior olive', 'inferior olivary', 'inferior olivary complex'],
+  CA1:   ['field ca1', 'hippocampal ca1', 'dorsal hippocampus', 'ventral hippocampus'],
+  CA2:   ['field ca2'],
+  CA3:   ['field ca3'],
+  DG:    ['dentate gyrus'],
+  ACB:   ['nucleus accumbens', 'accumbens', 'nac', 'nac core', 'nac shell'],
+  CP:    ['caudoputamen', 'dorsal striatum', 'striatum', 'dms', 'dls'],
+  BLA:   ['basolateral amygdala', 'basolateral amygdalar nucleus'],
+  CEA:   ['central amygdala', 'central amygdalar nucleus'],
+  MEA:   ['medial amygdala', 'medial amygdalar nucleus'],
+  VTA:   ['ventral tegmental area'],
+  SNC:   ['substantia nigra pars compacta', 'substantia nigra compact part'],
+  SNR:   ['substantia nigra pars reticulata', 'substantia nigra reticular part'],
+  LC:    ['locus coeruleus'],
+  DR:    ['dorsal raphe', 'dorsal raphe nucleus'],
+  PAG:   ['periaqueductal gray', 'periaqueductal grey'],
+  SC:    ['superior colliculus'],
+  IC:    ['inferior colliculus'],
+  PL:    ['prelimbic', 'prelimbic cortex'],
+  ILA:   ['infralimbic', 'infralimbic cortex'],
+  ACA:   ['anterior cingulate', 'anterior cingulate cortex', 'acc'],
+  ORB:   ['orbitofrontal cortex', 'ofc'],
+  AI:    ['insular cortex', 'insula', 'agranular insular'],
+  MOP:   ['primary motor cortex', 'm1'],
+  MOS:   ['secondary motor cortex', 'm2'],
+  SSP:   ['primary somatosensory', 'barrel cortex', 'barrel field', 's1'],
+  VISP:  ['primary visual cortex', 'v1'],
+  AUDP:  ['primary auditory cortex', 'a1'],
+  RSP:   ['retrosplenial cortex'],
+  ENT:   ['entorhinal cortex'],
+  PIR:   ['piriform cortex'],
+  MOB:   ['olfactory bulb', 'main olfactory bulb'],
+  LHA:   ['lateral hypothalamus', 'lateral hypothalamic area'],
+  PVH:   ['paraventricular hypothalamic nucleus', 'pvn'],
+  VMH:   ['ventromedial hypothalamus'],
+  ARH:   ['arcuate nucleus'],
+  SCH:   ['suprachiasmatic nucleus', 'scn'],
+  BST:   ['bed nucleus of the stria terminalis', 'bnst'],
+  NBM:   ['nucleus basalis', 'nucleus basalis of meynert'],
+  MS:    ['medial septum'],
+  STN:   ['subthalamic nucleus'],
+  GPE:   ['globus pallidus external', 'gpe'],
+  LHB:   ['lateral habenula'],
+  MHB:   ['medial habenula'],
+  PVT:   ['paraventricular thalamus'],
+  MD:    ['mediodorsal thalamus'],
+  VPM:   ['ventral posteromedial nucleus'],
+  LGN:   ['lateral geniculate'],
+  MGN:   ['medial geniculate'],
+  PB:    ['parabrachial nucleus'],
+  NTS:   ['nucleus of the solitary tract'],
+  PN:    ['pontine nuclei'],
+  VERM:  ['vermis', 'cerebellar vermis'],
+};
+
+// Reverse index: plain-language phrase -> canonical acronym.
+const ALIAS_TO_ACRONYM = (() => {
+  const m = new Map();
+  Object.entries(REGION_ALIASES).forEach(([acr, names]) => {
+    names.forEach((n) => m.set(n.toLowerCase(), acr));
+  });
+  return m;
+})();
+
+function aliasesFor(region) {
+  if (!region) return [];
+  return REGION_ALIASES[region.toUpperCase().replace(/[^A-Z0-9]/g, '')] || [];
+}
 
 const STOP_WORDS = new Set(['the', 'a', 'an', 'in', 'of', 'for', 'and', 'or', 'to', 'is', 'are',
   'was', 'were', 'with', 'that', 'this', 'it', 'be', 'as', 'at', 'by', 'from', 'on', 'not',
@@ -77,9 +157,9 @@ export default function App() {
   const [atlasTarget, setAtlasTarget] = useState(null);
   const chatContainerRef = useRef(null);
 
-  // PAGINATION: how many coordinate rows per paper the last/next prompt may include.
+  // PAGINATION: how many coordinate rows per paper the next prompt may include.
   const targetLimitRef = useRef(TARGET_PAGE_SIZE);
-  // Whether the previous prompt actually withheld rows (drives "show more" eligibility).
+  // Whether the previous prompt actually withheld rows (gates "show more" eligibility).
   const truncationRef = useRef({ truncated: false, maxTotal: 0 });
 
   useEffect(() => {
@@ -134,8 +214,13 @@ export default function App() {
     // 1. Structured coordinates (skip papers with no usable target).
     structuredIndex.forEach((rec, key) => {
       const targets = (rec.targets || []).filter((t) => t && typeof t === 'object');
+      // FIX: fold plain-language aliases into the searchable region text, so a paper
+      // tagged only "FN" still matches the query "fastigial nucleus".
       const regionText = targets
-        .map((t) => `${t.ccf_region || ''} ${t.region_verbatim || ''}`)
+        .map((t) => {
+          const acr = t.ccf_region || '';
+          return `${acr} ${t.region_verbatim || ''} ${aliasesFor(acr).join(' ')}`;
+        })
         .join(' ');
       pool.set(key, {
         pmid: rec.pmid,
@@ -160,7 +245,9 @@ export default function App() {
         (rec.ccf_regions || []).forEach((r) => { if (r && !existing.regions.includes(r)) existing.regions.push(r); });
       } else {
         pool.set(key, {
-          pmid: rec.pmid, regions: [...(rec.ccf_regions || [])], regionText: (rec.ccf_regions || []).join(' '),
+          pmid: rec.pmid,
+          regions: [...(rec.ccf_regions || [])],
+          regionText: (rec.ccf_regions || []).map((r) => `${r} ${aliasesFor(r).join(' ')}`).join(' '),
           title: rec.title || null, methodsText: '', passageText: pText,
           passages: rec.passages || [], structuredTargets: [],
         });
@@ -176,7 +263,9 @@ export default function App() {
         (p.regions || []).forEach((r) => { if (r && !existing.regions.includes(r)) existing.regions.push(r); });
       } else {
         pool.set(key, {
-          pmid: p.pmid, regions: [...(p.regions || [])], regionText: (p.regions || []).join(' '),
+          pmid: p.pmid,
+          regions: [...(p.regions || [])],
+          regionText: (p.regions || []).map((r) => `${r} ${aliasesFor(r).join(' ')}`).join(' '),
           title: null, methodsText: p.methods || '', passageText: '', passages: [], structuredTargets: [],
         });
       }
@@ -200,29 +289,50 @@ export default function App() {
   function getRelevantRefs(query, topN = 10) {
     const words = tokenize(query);
     const lowerQuery = (query || '').toLowerCase();
-    // FIX 3 support: normalized single-token set for exact acronym comparison.
-    const qTokens = new Set(
-      lowerQuery.split(/\s+/).map((w) => w.replace(/[^a-z0-9]/g, '')).filter(Boolean)
-    );
     const pool = getMergedLiteraturePool().filter(isMousePaper);
     if (!pool.length) return [];
 
+    // Normalized query tokens for exact acronym comparison ("fn" === "fn").
+    const qTokens = new Set(
+      lowerQuery.split(/\s+/).map((w) => w.replace(/[^a-z0-9]/g, '')).filter(Boolean)
+    );
+
+    // Resolve the query to a set of canonical CCF acronyms, from BOTH directions:
+    //   - an acronym typed directly ("FN")
+    //   - a plain-language phrase mapped back to its acronym ("fastigial nucleus" -> FN)
+    const queryAcronyms = new Set();
+    qTokens.forEach((tok) => {
+      if (REGION_ALIASES[tok.toUpperCase()]) queryAcronyms.add(tok.toUpperCase());
+    });
+    ALIAS_TO_ACRONYM.forEach((acr, phrase) => {
+      if (lowerQuery.includes(phrase)) queryAcronyms.add(acr);
+    });
+
     const scored = pool.map((entry) => {
       const passageText = (entry.passages || []).map((p) => p.text).join(' ');
-      // FIX 2: PMID is searchable, so "PMID 32639229" retrieves that paper directly.
+      // FIX 2: PMID is searchable, so "PMID 32639229" retrieves that paper.
       const text = `${entry.pmid} ${entry.title || ''} ${entry.regionText} ${passageText.slice(0, 1500)} ${entry.methodsText.slice(0, 1000)}`;
       let score = scoreText(words, text);
 
-      // FIX 3: exact region-acronym match outranks generic substring hits (+30 vs +10),
-      // breaking the flat tie where every same-region paper scored identically.
+      // FIX 3 + ALIASES: exact acronym or alias match outranks a loose substring hit.
       let regionMatched = false;
       entry.regions.forEach((r) => {
         if (!r) return;
         const rNorm = r.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (rNorm && qTokens.has(rNorm)) { score += 30; regionMatched = true; }
-        else if (lowerQuery.includes(r.toLowerCase())) { score += 10; regionMatched = true; }
+        const rAcr  = r.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+        if (rNorm && qTokens.has(rNorm)) {                       // exact: "FN" === "FN"
+          score += 30; regionMatched = true;
+        } else if (queryAcronyms.has(rAcr)) {                    // alias: "fastigial nucleus" -> FN
+          score += 30; regionMatched = true;
+        } else if (lowerQuery.includes(r.toLowerCase())) {       // substring
+          score += 10; regionMatched = true;
+        } else if (aliasesFor(r).some((a) => lowerQuery.includes(a))) {
+          score += 25; regionMatched = true;
+        }
       });
-      // Also match query words against structured region text (ccf_region + verbatim).
+
+      // Also match query words against structured region text (ccf_region + verbatim + aliases).
       const regScore = scoreText(words, entry.regionText);
       if (regScore > 0) { score += regScore * 2; regionMatched = true; }
 
@@ -232,8 +342,8 @@ export default function App() {
         (t) => t.ap_mm != null || t.ml_mm != null || t.dv_mm != null);
       if (structWithCoords.length) score += 5;
 
-      // FIX 4: an explicit PMID in the query wins outright; curated coords break ties.
-      if (entry.pmid && lowerQuery.includes(String(entry.pmid))) score += 50;
+      // FIX 4: a PMID typed into the query wins outright; curated coords break ties.
+      if (lowerQuery.includes(String(entry.pmid))) score += 50;
       if (structWithCoords.length && regionMatched) score += 3;
 
       const indexed = injectionIndex.get(String(entry.pmid));
@@ -257,13 +367,24 @@ export default function App() {
       .map((s) => s.entry);
   }
 
-  // `limit` = max validated coordinate rows emitted per paper (pagination page size).
+  // Detects "show more"-style follow-ups. Only increments when the LAST prompt
+  // actually withheld rows, so repeated "yes" can't run the limit away.
+  function resolveTargetLimit(userMessage) {
+    const wantsMore = MORE_REQUEST_RE.test(userMessage || '');
+    if (wantsMore && truncationRef.current.truncated) {
+      targetLimitRef.current = Math.min(
+        targetLimitRef.current + TARGET_PAGE_SIZE,
+        Math.max(truncationRef.current.maxTotal, TARGET_PAGE_SIZE)
+      );
+    } else if (!wantsMore) {
+      targetLimitRef.current = TARGET_PAGE_SIZE; // new question -> back to page 1
+    }
+    return targetLimitRef.current;
+  }
+
   function buildSystemPrompt(query, limit = TARGET_PAGE_SIZE) {
     const hwHits = getRelevantHardware(query);
     const relevantRefs = getRelevantRefs(query, 10);
-
-    let anyTruncated = false;
-    let maxTotal = 0;
 
     const syringeTable = syringeDb
       ? syringeDb.syringes.map((s) =>
@@ -276,19 +397,24 @@ export default function App() {
       ? hwHits.map((h) => `[${h.category}] ${h.title}: ${h.content}`).join('\n\n')
       : '(no directly matching hardware KB entries — answer from the syringe table and general knowledge, and say so if unsure)';
 
+    // Track pagination across the whole citation pool so the model is told the truth
+    // about whether rows were withheld — and withheld rows never enter context.
+    let anyTruncated = false;
+    let maxTotalTargets = 0;
+
     const citationPool = relevantRefs.length
       ? relevantRefs.map((r, i) => {
         const pmidLink = `https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/`;
         const header = `[${i + 1}] PMID:${r.pmid}${r.title ? ` — "${r.title}"` : ''}${r.species ? ` (${r.species})` : ''}`;
 
         if (r.hasStructured) {
-          // PRIMARY: emit the pre-parsed, validated coordinate fields + verbatim source quote.
           const total = r.structWithCoords.length;
-          if (total > maxTotal) maxTotal = total;
+          maxTotalTargets = Math.max(maxTotalTargets, total);
           const shown = r.structWithCoords.slice(0, limit);
-          const hidden = total - shown.length;
-          if (hidden > 0) anyTruncated = true;
+          const withheld = total - shown.length;
+          if (withheld > 0) anyTruncated = true;
 
+          // PRIMARY: emit the pre-parsed, validated coordinate fields + verbatim source quote.
           const lines = shown.map((t) => {
             const region = t.ccf_region || t.region_verbatim || 'unspecified region';
             const ap = fmtCoord(t.ap_mm), ml = fmtCoord(t.ml_mm), dv = fmtCoord(t.dv_mm);
@@ -300,9 +426,9 @@ export default function App() {
             return `     • ${region} — AP ${ap}, ML ${ml}, DV ${dv} mm (ref: ${ref}); volume ${vol}; rate ${rate}${quoteLine}`;
           }).join('\n');
 
-          const pageNote = hidden > 0
-            ? `\n   [PAGINATED] Showing rows 1–${shown.length} of ${total} for this PMID. ${hidden} row(s) withheld — the user must ask for more to see them.`
-            : (total > TARGET_PAGE_SIZE ? `\n   [PAGINATED] Showing all ${total} rows for this PMID.` : '');
+          const pageNote = withheld > 0
+            ? `\n   [PAGINATED] Showing rows 1–${shown.length} of ${total} for this PMID. ${withheld} row(s) withheld — the user must ask for more to see them.`
+            : (total > TARGET_PAGE_SIZE ? `\n   [COMPLETE] All ${total} rows for this PMID are shown.` : '');
 
           return `${header}\n   ✓ Validated stereotaxic coordinates (OSC-distilled, 92% verified):\n${lines}${pageNote}\n   Verify full context: ${pmidLink}`;
         }
@@ -317,12 +443,14 @@ export default function App() {
       }).join('\n\n')
       : '(no directly matching surgical literature indexed for this query — answer from general veterinary/stereotaxic knowledge and say so)';
 
-    // Record pagination state so the next turn knows whether "show more" is meaningful.
-    truncationRef.current = { truncated: anyTruncated, maxTotal };
+    // Record truncation state for the NEXT turn's "show more" handling.
+    truncationRef.current = { truncated: anyTruncated, maxTotal: maxTotalTargets };
 
     const paginationBanner = anyTruncated
-      ? `\nPAGINATION STATE: coordinate rows are capped at ${limit} per paper for readability. At least one paper above has withheld rows (marked [PAGINATED]). You MUST follow Rule 11.`
-      : `\nPAGINATION STATE: all available coordinate rows for the papers above are shown (cap ${limit} per paper not exceeded). Do NOT offer to show more.`;
+      ? `PAGINATION STATE: one or more papers above are marked [PAGINATED] with rows withheld. After the table, add exactly one blockquote line per paginated paper, in this form:
+    > Showing rows 1–N of M for [PMID:XXXXXXX]. Reply **"show more"** to see the next ${TARGET_PAGE_SIZE}.
+   If several papers are paginated, list one such line each. If nothing is marked as withholding rows, do NOT mention pagination and do NOT offer to show more.`
+      : `PAGINATION STATE: all available coordinate rows for the papers above are shown (cap ${limit} per paper not exceeded). Do NOT offer to show more.`;
 
     const firmwareRules = `
 ## ARDUINO FIRMWARE BEHAVIOR & KINEMATICS (.ino Specification)
@@ -358,16 +486,13 @@ The validated coordinate lines below were distilled from each paper's Methods te
 2. NEVER attach a coordinate, region, volume, or rate to a PMID unless it is explicitly listed under that PMID below. Do NOT transfer a value from one paper to another. Do NOT fabricate numbers. If a line does not contain a value, it is "not stated".
 3. TABLE RULE: for any coordinate/target/parameter query, respond with a GitHub-flavored markdown table with EXACTLY these columns: Paper (PMID) | Region(s) | AP (mm) | ML (mm) | DV (mm) | Reference | Volume | Rate | Source quote. The final "Source quote" column MUST contain the verbatim source_quote provided for that coordinate line (the sentence the values came from). If a line has no source_quote, put "—". Do NOT invent or paraphrase the quote; copy it exactly. Do NOT add a separate "Notes" column — the source quote replaces it.
 4. VALIDATED COORDINATES: Entries marked "✓ Validated stereotaxic coordinates" are pre-parsed, human-verified fields. Report their AP/ML/DV/reference/volume/rate EXACTLY as given — do NOT re-derive, round, or alter them, and do NOT write "not stated" when a value is present. Report a value as "not stated" ONLY when the line literally shows "not stated".
-5. REGION AUTHORITY: The ccf_region value IS the validated brain region for that coordinate line — the standard Allen CCF acronym (e.g. "SIM" = simplex lobule, "CA1" = hippocampal field CA1, "ACB" = nucleus accumbens, "CP" = caudoputamen). Report THIS specific region in the Region column. Do NOT downgrade it to a generic parent structure (do NOT write "Cerebellum" when the line says "SIM"; do NOT write "Hippocampus" for "CA1"). Do NOT describe ccf_region as a "candidate", "derived", "atlas-mapped", or "likely" region — it is validated. You may expand the acronym for clarity (e.g. "SIM (simplex lobule)") but NEVER replace the specific structure with its parent.
+5. REGION AUTHORITY: The ccf_region value IS the validated brain region for that coordinate line — the standard Allen CCF acronym (e.g. "SIM" = simplex lobule, "FN" = fastigial nucleus, "CA1" = hippocampal field CA1, "ACB" = nucleus accumbens, "CP" = caudoputamen). Report THIS specific region in the Region column. Do NOT downgrade it to a generic parent structure (do NOT write "Cerebellum" when the line says "SIM"; do NOT write "Hippocampus" for "CA1"). Do NOT describe ccf_region as a "candidate", "derived", "atlas-mapped", or "likely" region — it is validated. You may expand the acronym for clarity (e.g. "SIM (simplex lobule)") but NEVER replace the specific structure with its parent.
 6. RANGES: When a value is a range string (e.g. "0.1 to 0.5", "150-200", "30-50"), report the FULL range exactly as given — do NOT collapse it to a single endpoint or average it.
 7. REGION BINDING: A coordinate set belongs ONLY to the region named on its own line. If a paper lists multiple targets, report them on SEPARATE rows with their own source_quote. NEVER present one region's coordinates as another's. Lambda- and bregma-referenced values are NOT interchangeable — always report the Reference column.
 8. If NONE of the listed papers name the requested region (after applying the WORD-SENSE rule above), say so plainly and give general atlas guidance — do NOT substitute a different structure's coordinates or invent one. It is correct and expected to say "the indexed literature does not contain a coordinate for X."
 9. Every coordinate row must include its [PMID:XXXXXXX] link. The evidence for each row is its validated fields + the verbatim source quote in the Source quote column + the PMID link.
 10. Close literature-grounded answers with a one-line reminder that this is not a substitute for IACUC-approved protocols or veterinary/atlas verification.
-11. PAGINATION — MANDATORY: Coordinate rows are capped at ${limit} per paper. Report ONLY the rows shown above; the withheld rows are NOT available to you and you must NEVER guess, summarise, or invent them. When any citation is marked [PAGINATED] with withheld rows, end your answer with a single line in exactly this form (one line per affected paper), then stop:
-    > Showing rows 1–N of M for [PMID:XXXXXXX]. Reply **"show more"** to see the next ${TARGET_PAGE_SIZE}.
-   If several papers are paginated, list one such line each. If nothing is marked as withholding rows, do NOT mention pagination and do NOT offer to show more.
-${paginationBanner}
+11. PAGINATION: Report ONLY the coordinate lines actually listed below. Rows marked as withheld are NOT available to you — never guess, reconstruct, or summarize them. ${paginationBanner}
 
 ${firmwareRules}
 
@@ -377,7 +502,7 @@ ${hwContext}
 ## HAMILTON SYRINGE COMPATIBILITY TABLE
 ${syringeTable}
 
-## RELEVANT SURGICAL LITERATURE (structured-coordinate first, ${relevantRefs.length} papers, most relevant first)
+## RELEVANT SURGICAL LITERATURE (structured-coordinate first, ${relevantRefs.length} papers, most relevant first; up to ${limit} coordinate rows per paper)
 ${citationPool}`;
 
     return { role: 'system', content };
@@ -432,21 +557,6 @@ ${citationPool}`;
       (_, pmid) => `[[PMID:${pmid}]](https://pubmed.ncbi.nlm.nih.gov/${pmid}/)`);
   }
 
-  // Decide how many coordinate rows per paper this turn may show.
-  //   - a "show more" follow-up while rows are withheld  -> previous limit + 10
-  //   - anything else (a new question)                   -> reset to 10
-  function resolveTargetLimit(userMessage) {
-    const isMore = MORE_REQUEST_RE.test((userMessage || '').trim());
-    if (isMore && truncationRef.current.truncated) {
-      const next = targetLimitRef.current + TARGET_PAGE_SIZE;
-      targetLimitRef.current = next;
-      return next;
-    }
-    if (isMore) return targetLimitRef.current; // nothing withheld — keep current page size
-    targetLimitRef.current = TARGET_PAGE_SIZE; // new topic resets pagination
-    return TARGET_PAGE_SIZE;
-  }
-
   async function handleChat(userMessage) {
     if (!userMessage.trim()) return;
     setIsLoading(true);
@@ -460,12 +570,19 @@ ${citationPool}`;
       setLoadingStatus('Finding relevant papers…');
       const recentContext = chatMessages.filter((m) => m.role !== 'system').slice(-4)
         .map((m) => m.content).join(' ');
-      const ragQuery = `${recentContext} ${userMessage}`.trim();
+
+      // A "show more" follow-up must reuse the PREVIOUS query for retrieval —
+      // "show more" alone has no region signal.
+      const wantsMore = MORE_REQUEST_RE.test(userMessage);
+      const ragQuery = wantsMore
+        ? `${recentContext}`.trim()
+        : `${recentContext} ${userMessage}`.trim();
 
       const limit = resolveTargetLimit(userMessage);
+
       setLoadingStatus(
         limit > TARGET_PAGE_SIZE
-          ? `Loading coordinate rows 1–${limit} per paper…`
+          ? `Reading validated coordinates (up to ${limit} rows/paper)…`
           : 'Reading validated coordinates…'
       );
       const systemPrompt = buildSystemPrompt(ragQuery, limit);
