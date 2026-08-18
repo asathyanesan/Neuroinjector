@@ -11,6 +11,12 @@
 //
 // ONE PMID per issue (from the template's PMID field), applied to all rows.
 //
+// FIX in this version (parseTsv only):
+//   - strips the ```text / ``` code fences that the issue-form `render: text`
+//     wraps the paste in (these caused the false "not TAB-separated" error).
+//   - finds the REAL header row (skips a merged banner row like "Injection Side"
+//     that Excel places above the actual column headers).
+//
 // Env provided by the workflow:
 //   WORKER_URL  (secret)  — FlyerGPT worker base URL (for the Methods path)
 //   ISSUE_BODY            — the raw issue body markdown
@@ -70,12 +76,26 @@ function normVal(raw) {
 
 // ------------------------------------------------------- TSV bulk parser ----
 function parseTsv(tsv, pmid) {
-  const rows = tsv.replace(/\r/g, '').split('\n').filter(l => l.trim());
-  if (rows.length < 2) throw new Error('need a header row plus at least one data row');
-  if (!rows[0].includes('\t'))
-    throw new Error('input is not TAB-separated — copy the rows directly from Excel, do not retype');
+  // 1. strip the ```text / ``` code fences that the issue-form `render: text` adds
+  const raw = tsv.replace(/\r/g, '').replace(/^```[a-z]*\s*$/gim, '');
+  const allRows = raw.split('\n').filter(l => l.trim());
+  if (allRows.length < 2) throw new Error('need a header row plus at least one data row');
 
-  const header = rows[0].split('\t').map(h => h.trim());
+  // 2. find the REAL header row (skips a merged banner like "Injection Side"):
+  //    the first tab-containing line that names the key columns.
+  let headerIdx = allRows.findIndex(l =>
+    l.includes('\t') && /injection\s*site/i.test(l) && /\bap\b/i.test(l));
+  // fallback: first line that has a tab AND an AP-like + ML + DV token
+  if (headerIdx < 0) {
+    headerIdx = allRows.findIndex(l =>
+      l.includes('\t') && /\bap\b/i.test(l) && /\bml\b/i.test(l) && /\bdv\b/i.test(l));
+  }
+  if (headerIdx < 0)
+    throw new Error('could not find the column header row (needs a TAB-separated line '
+      + 'containing the AP / ML / DV column names). Copy the rows directly from Excel.');
+
+  const header = allRows[headerIdx].split('\t').map(h => h.trim());
+  const rows = allRows.slice(headerIdx);   // header at [0], data from [1]
   const H = header.map(h => h.toLowerCase());
 
   const findCol = (...keys) => H.findIndex(h => keys.some(k => h.includes(k)));
