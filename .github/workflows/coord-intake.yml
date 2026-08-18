@@ -1,7 +1,7 @@
 name: Coordinate Intake
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 
 permissions:
   contents: write
@@ -49,3 +49,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUM: ${{ github.event.issue.number }}
         run: gh issue comment "$ISSUE_NUM" --body-file pr_body.md
+        
+concurrency:
+  group: coord-intake-${{ github.event.issue.number }}
+  cancel-in-progress: true
