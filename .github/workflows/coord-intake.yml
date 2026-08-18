@@ -1,0 +1,51 @@
+name: Coordinate Intake
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  extract:
+    if: contains(github.event.issue.labels.*.name, 'add-coords')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Extract coordinates via FlyerGPT
+        id: extract
+        env:
+          WORKER_URL: ${{ secrets.FLYERGPT_WORKER_URL }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+        run: node scripts/coord-from-issue.js
+
+      - name: Open Pull Request
+        if: steps.extract.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PMID: ${{ steps.extract.outputs.pmid }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+        run: |
+          BRANCH="coords/pmid-${PMID}-issue-${ISSUE_NUM}"
+          git config user.name  "coord-bot"
+          git config user.email "coord-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add react-app/public/data/injection-structured.json
+          git commit -m "Add coordinates for PMID ${PMID} (issue #${ISSUE_NUM})"
+          git push origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" \
+            --title "Add coordinates: PMID ${PMID} (#${ISSUE_NUM})" \
+            --body-file pr_body.md
+
+      - name: Comment failure on issue
+        if: steps.extract.outputs.ok != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+        run: gh issue comment "$ISSUE_NUM" --body-file pr_body.md
