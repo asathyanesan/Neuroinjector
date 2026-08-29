@@ -151128,8 +151128,8 @@
     "pmid": "37205547",
     "targets": [
       {
-        "region_verbatim": "virus",
-        "ccf_region": "Bregma",
+        "region_verbatim": "bed nucleus of the stria terminalis",
+        "ccf_region": "BNST",
         "ap_mm": 0.23,
         "ml_mm": 0.9,
         "dv_mm": -4.75,
@@ -151139,8 +151139,8 @@
         "source_quote": "200 nL per side (relative to bregma: ML ±0.9 mm, AP, 0.23 mm, DV −4.75 mm) and the needle was left in place for 5 min to allow for diffusion of the virus before the needle was slowly withdrawn."
       },
       {
-        "region_verbatim": "virus",
-        "ccf_region": "Bregma",
+        "region_verbatim": "bed nucleus of the stria terminalis",
+        "ccf_region": "BNST",
         "ap_mm": 0.23,
         "ml_mm": -0.9,
         "dv_mm": -4.75,
