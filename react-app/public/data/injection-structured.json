@@ -145361,17 +145361,6 @@
     "pmid": "36656900",
     "targets": [
       {
-        "region_verbatim": "bregma",
-        "ccf_region": "Bregma",
-        "ap_mm": 0,
-        "ml_mm": 0,
-        "dv_mm": -2.5,
-        "reference": "bregma",
-        "volume_nl": 1000,
-        "rate_nl_min": null,
-        "source_quote": "coordinates of injection: medial/lateral (X-axis): 0, anterior/posterior (Y-axis): 0, dorsal/ventral (Z-axis): -2.5"
-      },
-      {
         "region_verbatim": "cerebral cortex",
         "ccf_region": "Cortex",
         "ap_mm": 0,
