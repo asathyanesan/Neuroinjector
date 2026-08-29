@@ -178346,8 +178346,8 @@
     "pmid": "39378096",
     "targets": [
       {
-        "region_verbatim": "target region",
-        "ccf_region": null,
+        "region_verbatim": "hippocampal area CA1",
+        "ccf_region": "CA1",
         "ap_mm": -1.55,
         "ml_mm": 1.05,
         "dv_mm": -1.5,
@@ -178357,8 +178357,8 @@
         "source_quote": "25 nl of solution delivered every 15 s until a total amount of 200 nl was reached"
       },
       {
-        "region_verbatim": "target region",
-        "ccf_region": null,
+        "region_verbatim": "hippocampal area CA1",
+        "ccf_region": "CA1",
         "ap_mm": -1.55,
         "ml_mm": -1.05,
         "dv_mm": -1.5,
