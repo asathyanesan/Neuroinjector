@@ -44,3 +44,8 @@ assistant/atlas/ccf_ontology.json
 assistant/atlas/structure_graph.json
 
 react-app/public/atlas/annotation_25.nrrd
+react-app/figures/neuroinjector_overview.pdf
+react-app/figures/neuroinjector_overview.png
+react-app/figures/neuroinjector_overview.svg
+react-app/tables/SIM_atlas_points.csv
+react-app/tables/targets_per_division.csv

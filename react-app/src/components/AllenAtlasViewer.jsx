@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const CCF_VOXEL_SIZE_MM = 0.01;
-const BREGMA_DV_VOXEL = 44;
+const BREGMA_DV_VOXEL = 44; // fallback only, used when no tissue exists in a clicked column
 const MIDLINE_ML_VOXEL = 570;
+// DV=0 is defined at the pial surface, not at this fixed row; see findSurfaceVoxelY.
+const PIA_MARGIN_VOXELS = 3; // ~30 µm dorsal allowance above the annotated tissue edge
 
 // Full CCF coronal extent at 10 um, in viewBox units (1 unit == 1 voxel).
 const VOL_W = 1140; // ML
@@ -117,6 +119,37 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
     return { id, acronym: e ? e.acronym : `id:${id}`, name: e ? e.name : '' };
   }, [idToAcronym]);
 
+  // Scans one ML column of the structure-ID map top-down for the first tissue
+  // voxel, i.e. the pial surface at that column on the current AP slice.
+  // Returns voxel-space Y (dorsal->ventral), or null if the column is all background.
+  const findSurfaceVoxelY = useCallback((voxelZ) => {
+    const m = idMapRef.current;
+    if (!m.ready || !m.ctx) return null;
+    const px = Math.round((voxelZ / VOL_W) * m.w);
+    if (px < 0 || px >= m.w) return null;
+    let col;
+    try {
+      col = m.ctx.getImageData(px, 0, 1, m.h).data;
+    } catch {
+      return null;
+    }
+    for (let py = 0; py < m.h; py++) {
+      const o = py * 4;
+      const id = (col[o] << 16) | (col[o + 1] << 8) | col[o + 2];
+      if (id !== 0) return (py / m.h) * VOL_H;
+    }
+    return null;
+  }, []);
+
+  // The DV=0 origin for a given column: a few voxels dorsal to the first
+  // annotated tissue row, approximating the pia (which sits just outside the
+  // annotation volume). Falls back to the fixed bregma-plane row if the
+  // column has no tissue at all (e.g. far-lateral background).
+  const dvOriginVoxelY = useCallback((voxelZ) => {
+    const surface = findSurfaceVoxelY(voxelZ);
+    return surface != null ? surface - PIA_MARGIN_VOXELS : BREGMA_DV_VOXEL;
+  }, [findSurfaceVoxelY]);
+
   useEffect(() => {
     if (clickedTarget) {
       setDraftAp(clickedTarget.ap != null ? String(clickedTarget.ap) : '');
@@ -198,7 +231,8 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
     const voxelY = loc.y;
 
     const ml_mm = parseFloat(((voxelZ - MIDLINE_ML_VOXEL) * CCF_VOXEL_SIZE_MM).toFixed(2));
-    const dv_mm = parseFloat(((voxelY - BREGMA_DV_VOXEL) * CCF_VOXEL_SIZE_MM).toFixed(2));
+    const surfaceVoxelY = dvOriginVoxelY(voxelZ);
+    const dv_mm = parseFloat(((voxelY - surfaceVoxelY) * CCF_VOXEL_SIZE_MM).toFixed(2));
 
     const hit = lookupStructure(voxelZ, voxelY);
     const outside = hit === null;
@@ -209,6 +243,7 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
       yRatio: voxelY / VOL_H,
       voxelZ,
       voxelY,
+      surfaceVoxelY,
       ap: activeSlice.ap_mm,
       ml: ml_mm,
       dv: dv_mm,
@@ -251,7 +286,8 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
     next.dv = parseFloat(Number(next.dv).toFixed(2));
 
     next.voxelZ = next.ml / CCF_VOXEL_SIZE_MM + MIDLINE_ML_VOXEL;
-    next.voxelY = next.dv / CCF_VOXEL_SIZE_MM + BREGMA_DV_VOXEL;
+    next.surfaceVoxelY = dvOriginVoxelY(next.voxelZ);
+    next.voxelY = next.dv / CCF_VOXEL_SIZE_MM + next.surfaceVoxelY;
     next.xRatio = next.voxelZ / VOL_W;
     next.yRatio = next.voxelY / VOL_H;
 
@@ -402,8 +438,12 @@ export default function AllenAtlasViewer({ onTargetSelect }) {
 
           <line x1="570" y1="0" x2="570" y2={VOL_H}
                 stroke="#ef4444" strokeDasharray="6 6" strokeWidth={sw(2)} pointerEvents="none" />
-          <line x1="0" y1="44" x2={VOL_W} y2="44"
-                stroke="#3b82f6" strokeDasharray="4 4" strokeWidth={sw(2)} pointerEvents="none" />
+          {/* DV=0 (pial surface) varies by column, so only draw it at the active target's ML */}
+          {clickedTarget && clickedTarget.surfaceVoxelY != null && (
+            <line x1={clickedTarget.voxelZ - 60 / zoom} y1={clickedTarget.surfaceVoxelY}
+                  x2={clickedTarget.voxelZ + 60 / zoom} y2={clickedTarget.surfaceVoxelY}
+                  stroke="#3b82f6" strokeDasharray="4 4" strokeWidth={sw(2)} pointerEvents="none" />
+          )}
 
           {clickedTarget && clickedTarget.voxelZ != null && (
             <g transform={`translate(${clickedTarget.voxelZ}, ${clickedTarget.voxelY})`}
