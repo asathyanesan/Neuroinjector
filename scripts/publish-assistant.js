@@ -1,7 +1,7 @@
 /**
  * Copies react-app/dist/* into a root-level assistant/ folder so GitHub Pages
  * (deploy-from-branch, same mechanism that already serves webapp/) can serve
- * the built assistant at https://asathyanesan.github.io/Neuroinjector/assistant/.
+ * the built assistant at https://asathyanesan.github.io/Neuroinjector-OSE/assistant/.
  *
  * Usage: node scripts/publish-assistant.js
  * Run automatically via react-app's "npm run deploy" (after "npm run build").

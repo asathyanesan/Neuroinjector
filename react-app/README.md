@@ -41,7 +41,7 @@ This project reuses the **same deployed Cloudflare Worker** as
 [ds-research-tool-test](https://github.com/asathyanesan/ds-research-tool-test) rather than
 standing up new infrastructure. Its `ALLOWED_ORIGINS` already includes
 `https://asathyanesan.github.io` — since CORS only checks scheme+host (not path), this app
-(hosted at `.../Neuroinjector/assistant/`) is already covered with **no changes needed on the
+(hosted at `.../Neuroinjector-OSE/assistant/`) is already covered with **no changes needed on the
 worker side**. Just set `VITE_WORKER_URL` in `.env` to that worker's `https://*.workers.dev` URL.
 
 ## Known limitations / follow-ups

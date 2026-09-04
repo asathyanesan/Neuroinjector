@@ -27,7 +27,7 @@ only shipped with the 7000.5 (0.5 µL) and 7001 (1 µL) models built in. The [`w
 folder contains a static, client-side-only web app that lets you pick from a database of 
 Hamilton syringe models built from Hamilton's official spec sheets, add a custom syringe by
 volume/stroke length, and download a ready-to-flash `injector_control.ino` generated from your selection. 
-You can access the Syringe Configurator Web App here: [https://asathyanesan.github.io/Neuroinjector/webapp/](https://asathyanesan.github.io/Neuroinjector/webapp/)
+You can access the Syringe Configurator Web App here: [https://asathyanesan.github.io/Neuroinjector-OSE/webapp/](https://asathyanesan.github.io/Neuroinjector-OSE/webapp/)
 
 **Note on Neuros syringes:** Hamilton Neuros syringes (part numbers 65457/65458/65459) share
 the same 7.8 mm barrel OD as the supported Knurled Hub (KH) syringes, but have been confirmed
@@ -52,7 +52,7 @@ It's meant to help with two things:
 Built and published to the repo-root `assistant/` folder via `npm run deploy` (see
 [`react-app/README.md`](/react-app/README.md)), the same "deploy from branch" mechanism
 already used for `webapp/`. You can access it here:
-[https://asathyanesan.github.io/Neuroinjector/assistant/](https://asathyanesan.github.io/Neuroinjector/assistant/)
+[https://asathyanesan.github.io/Neuroinjector-OSE/assistant/](https://asathyanesan.github.io/Neuroinjector-OSE/assistant/)
 
 > Note: `assistant-legacy/` (a Python/LangChain-based prototype of this same idea) predates the
 > `react-app` approach above and is currently unused/superseded, kept only for reference.

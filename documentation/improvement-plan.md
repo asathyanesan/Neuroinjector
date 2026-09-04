@@ -18,7 +18,7 @@ Neuroinjector/
 │   ├── public/
 │   │   ├── data/                  ← Runtime JSON data files (served statically)
 │   │   └── atlas/                 ← CCFv3 manifest, structure list, coronal PNG slices
-│   ├── vite.config.js             ← base: '/Neuroinjector/assistant/'
+│   ├── vite.config.js             ← base: '/Neuroinjector-OSE/assistant/'
 │   └── package.json
 ├── scripts/                       ← Node.js data pipeline (no bundler, no deps)
 │   ├── build-injection-db.js      ← Full PubMed sweep → OVERWRITES stereotaxic-protocols.json
